@@ -1,0 +1,13 @@
+{
+  "common": {
+    "title": "Rolz",
+    "disconnect": "Cerrar sesión"
+  },
+  "navigation": {
+    "home": "Inicio"
+  },
+  "home": {
+    "not_logged_in_title": "Hello World!",
+    "not_logged_in_message": ":)"
+  }
+}
