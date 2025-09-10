@@ -7,3 +7,10 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
+
+.text-body-secondary {
+    margin-left: 2px;
+    font-size: 0.95rem;
+    opacity: var(--v-medium-emphasis-opacity);
+    font-style: italic;
+}
