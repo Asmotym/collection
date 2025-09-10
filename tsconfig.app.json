@@ -7,7 +7,8 @@
       "core/*": ["src/core/*"],
       "modules/*": ["src/modules/*"],
       "netlify/*": ["netlify/*"],
-      "assets/*": ["src/assets/*"]
+      "assets/*": ["src/assets/*"],
+      "api/*": ["src/api/*"]
     },
 
     /* Linting */

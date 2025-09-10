@@ -13,6 +13,12 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/api/collection"
+  to = "/.netlify/functions/collection"
+  status = 200
+  force = true
+
 # SPA fallback - must be last
 [[redirects]]
   from = "/*"

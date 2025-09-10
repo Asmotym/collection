@@ -15,6 +15,7 @@ export default defineConfig({
       modules: path.resolve(__dirname, 'src/modules'),
       netlify: path.resolve(__dirname, 'netlify'),
       assets: path.resolve(__dirname, 'src/assets'),
+      api: path.resolve(__dirname, 'src/api'),
     }
   }
 })
