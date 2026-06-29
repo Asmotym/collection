@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import type { DiscordUser } from 'netlify/core/types/discord.types';
+import type { DiscordUser } from '../../../../shared/types/discord.types';
 import { ref, onMounted } from 'vue'
 import { DiscordService } from 'modules/discord-auth/services/discord.service';
 import { useRouter } from 'vue-router';

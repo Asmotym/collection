@@ -1,4 +1,4 @@
-import type { DiscordAuth, DiscordUser } from "netlify/core/types/discord.types";
+import type { DiscordAuth, DiscordUser } from "../../../../shared/types/discord.types";
 import { getApiUrl, getRedirectUri } from "modules/discord-auth/utils/urls.utils";
 import { ref, type Ref } from 'vue';
 

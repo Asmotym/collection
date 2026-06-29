@@ -1,7 +1,0 @@
-# API redirects
-/api/test /.netlify/functions/test 200
-/api/discord /.netlify/functions/discord 200
-/api/collection /.netlify/functions/collection 200
-
-# SPA fallback
-/* /index.html 200

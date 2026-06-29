@@ -3,15 +3,10 @@
  */
 
 export const getBackendUrl = (): string => {
-  // Use environment variable if available
-  if (import.meta.env.VITE_BACKEND_URL) {
-    return import.meta.env.VITE_BACKEND_URL
-  }
+  const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL;
+  const baseUrl = configuredBaseUrl || `${window.location.origin}/api`;
 
-  const protocol = window.location.protocol
-  const hostname = window.location.hostname
-  const port = import.meta.env.VITE_BACKEND_PORT
-  return `${protocol}//${hostname}:${port}`
+  return baseUrl.endsWith('/api') ? baseUrl : `${baseUrl.replace(/\/$/, '')}/api`
 }
 
 export const getRedirectUri = (): string => {
@@ -25,5 +20,5 @@ export const getRedirectUri = (): string => {
 }
 
 export const getApiUrl = (endpoint: string): string => {
-  return `${getBackendUrl()}/api${endpoint}`
+  return `${getBackendUrl()}${endpoint}`
 } 
