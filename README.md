@@ -45,6 +45,7 @@ This builds and starts:
 - `frontend`: Vite app served by Nginx at `http://localhost:8080`
 - `backend`: Fastify API at `http://localhost:3000`
 - `postgres`: PostgreSQL 16 with a named Docker volume
+- `adminer`: database web UI at `http://localhost:8081`
 
 Common commands:
 
@@ -53,6 +54,7 @@ make ps          # show running services
 make logs        # follow service logs
 make health      # check http://localhost:8080/health
 make collection  # check http://localhost:8080/api/collection
+make db-ui       # print database web UI connection details
 make stop        # stop containers without removing them
 make down        # stop and remove containers/networks
 make destroy     # remove containers, networks, volumes, and local images
@@ -73,6 +75,7 @@ This runs the full stack in the foreground with source folders mounted into the 
 - Vite dev server at `http://localhost:5173`
 - Fastify backend watcher at `http://localhost:3000`
 - PostgreSQL at `localhost:5432`
+- Adminer database web UI at `http://localhost:8081`
 
 Frontend requests to `/api/*` and `/health` are proxied by Vite to the backend container, so the app can keep using same-origin API URLs during development.
 
@@ -81,6 +84,7 @@ Useful watch-mode commands:
 ```sh
 make dev-health      # check http://localhost:5173/health
 make dev-collection  # check http://localhost:5173/api/collection
+make dev-db-ui       # print database web UI connection details
 make watch-down      # stop and remove the watch-mode containers
 ```
 
@@ -132,3 +136,13 @@ Schema initialization is in `postgres/init/001_schema.sql`. It creates:
 - `users`
 
 The Docker database starts with schema only and no sample collection data.
+
+Use Adminer at `http://localhost:8081` to inspect the Docker database:
+
+```text
+System: PostgreSQL
+Server: postgres
+Username: collection
+Password: collection
+Database: collection
+```

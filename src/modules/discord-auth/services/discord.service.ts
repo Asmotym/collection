@@ -16,19 +16,26 @@ export class DiscordService {
     }
 
     public async handleLogin(): Promise<DiscordUser | null> {
-        const savedUser = this.getUser();
-        if (savedUser !== null) {
-            this.storeUser(savedUser);
-        } else {
-            const auth = this.getAuth();
-            if (auth && auth.accessToken) {
-                await this.fetchUserInfo(auth);
-            }
-        }
-        
         // Handle OAuth callback
         if (window.location.hash.includes('token_type=')) {
             await this.handleAuthCallback();
+            return this.user.value;
+        }
+
+        const savedUser = this.getUser();
+        if (savedUser !== null) {
+            this.storeUser(savedUser);
+        }
+
+        const auth = this.getAuth();
+        if (auth && auth.accessToken) {
+            try {
+                await this.fetchUserInfo(auth);
+            } catch (error) {
+                if (savedUser === null) {
+                    throw error;
+                }
+            }
         }
 
         return this.user.value;
@@ -141,7 +148,8 @@ export class DiscordService {
 
     public getUser(): DiscordUser | null {
         const user = localStorage.getItem('discord_user');
-        return user ? JSON.parse(user) : null;
+        const parsedUser = user ? JSON.parse(user) as DiscordUser : null;
+        return parsedUser ? { ...parsedUser, rights: parsedUser.rights ?? 'user' } : null;
     }
 
     public isLoggedIn(): boolean {

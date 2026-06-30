@@ -5,13 +5,13 @@
             <v-col v-for="item in collection" :key="item.id" cols="12" sm="5" md="3">
                 <v-card>
                     <v-card-title>
-                        {{ item.album_name }}<span class="text-body-secondary">({{ item.album_year }})</span>
+                        {{ item.album_name }}<span class="text-body-secondary">({{ item.album_year ?? '-' }})</span>
                     </v-card-title>
                     <v-card-subtitle>
                         {{ item.artist_name }}
                     </v-card-subtitle>
                     <v-card-text>
-                        <v-img :src="item.album_image" :alt="item.album_name" />
+                        <v-img :src="item.album_image ?? undefined" :alt="item.album_name" />
                     </v-card-text>
                 </v-card>
             </v-col>

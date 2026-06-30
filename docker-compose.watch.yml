@@ -51,6 +51,14 @@ services:
       timeout: 5s
       retries: 10
 
+  adminer:
+    image: adminer:4
+    ports:
+      - "8081:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   frontend-node-modules:
   backend-node-modules:

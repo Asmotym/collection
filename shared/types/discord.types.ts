@@ -1,3 +1,5 @@
+import type { UserRights } from './database.types.js';
+
 export type DiscordAuth = {
     tokenType: string;
     accessToken: string;
@@ -10,4 +12,5 @@ export interface DiscordUser {
     id: string;
     username: string;
     avatar: string;
+    rights: UserRights;
 }

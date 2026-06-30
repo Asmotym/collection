@@ -4,10 +4,42 @@
     "disconnect": "Se déconnecter"
   },
   "navigation": {
-    "home": "Accueil"
+    "home": "Accueil",
+    "dashboard": "Dashboard"
   },
   "home": {
     "not_logged_in_title": "Hello World!",
     "not_logged_in_message": ":)"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "tabs": {
+      "artists": "Artistes",
+      "albums": "Albums",
+      "collection": "Collection"
+    },
+    "columns": {
+      "album": "Album",
+      "albums": "Albums",
+      "artist": "Artiste",
+      "image": "Image",
+      "name": "Nom",
+      "year": "Année"
+    },
+    "actions": {
+      "addAlbum": "Ajouter un album",
+      "addArtist": "Ajouter un artiste",
+      "addCollection": "Ajouter une ligne",
+      "cancel": "Annuler",
+      "save": "Enregistrer"
+    },
+    "fields": {
+      "album": "Album",
+      "albumName": "Nom de l'album",
+      "artist": "Artiste",
+      "artistName": "Nom de l'artiste",
+      "image": "URL de l'image",
+      "year": "Année"
+    }
   }
 }

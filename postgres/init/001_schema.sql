@@ -21,6 +21,5 @@ CREATE TABLE IF NOT EXISTS users (
     discord_user_id TEXT PRIMARY KEY,
     username TEXT NOT NULL,
     avatar TEXT,
-    rights_update BOOLEAN NOT NULL DEFAULT FALSE,
-    rights_testing_ground BOOLEAN NOT NULL DEFAULT FALSE
+    rights TEXT NOT NULL DEFAULT 'user' CHECK (rights IN ('user', 'admin'))
 );
