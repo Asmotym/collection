@@ -1,6 +1,7 @@
 <template>
     <HeaderComponent />
     <v-container v-if="userLoggedIn" class="py-6">
+        <h1 class="text-h4 mb-4">{{ t('home.title') }}</h1>
         <v-row v-if="collection.length > 0">
             <v-col v-for="item in collection" :key="item.id" cols="12" sm="5" md="3">
                 <v-card>
@@ -10,8 +11,15 @@
                     <v-card-subtitle>
                         {{ item.artist_name }}
                     </v-card-subtitle>
+                    <div v-if="item.album_image" class="mt-3 pl-4 pr-4">
+                        <ImagePreview
+                            :src="item.album_image"
+                            :alt="item.album_name"
+                            full-width
+                        />
+                    </div>
                     <v-card-text>
-                        <v-img :src="item.album_image ?? undefined" :alt="item.album_name" />
+                        <CollectionMetadataDisplay :metadata="item.metadata" cards-only />
                     </v-card-text>
                 </v-card>
             </v-col>
@@ -27,6 +35,8 @@ import type { CollectionItem } from 'core/store/stores/collection.store';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import HeaderComponent from 'core/components/Header.component.vue';
+import ImagePreview from 'core/components/ImagePreview.component.vue';
+import CollectionMetadataDisplay from 'core/components/CollectionMetadataDisplay.component.vue';
 import { DiscordService } from 'modules/discord-auth/services/discord.service';
 import { store } from 'core/store/index.store';
 
@@ -40,6 +50,10 @@ const collectionStore = store.collection();
 const collection = ref<CollectionItem[]>([]);
 
 onMounted(async () => {
-    collection.value = await collectionStore.getAll();
+    const user = await discordService.handleLogin();
+
+    if (user) {
+        collection.value = await collectionStore.getAll(user.id);
+    }
 })
 </script>

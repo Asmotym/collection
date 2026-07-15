@@ -8,8 +8,39 @@
     "dashboard": "Dashboard"
   },
   "home": {
+    "title": "Meine Sammlung",
     "not_logged_in_title": "Hello World!",
     "not_logged_in_message": ":)"
+  },
+  "validation": {
+    "required": "Dieses Feld ist erforderlich",
+    "httpUrl": "Gib eine gültige HTTP(S)-URL ein"
+  },
+  "imagePreview": {
+    "open": "Bild für {name} öffnen",
+    "close": "Bildvorschau schließen",
+    "copy": "Kopieren",
+    "copySuccess": "Link wurde in die Zwischenablage kopiert",
+    "copyFailure": "Der Link konnte nicht kopiert werden"
+  },
+  "metadata": {
+    "title": "Zusätzliche Informationen",
+    "addUrl": "URL hinzufügen",
+    "addText": "Text hinzufügen",
+    "emptyEditor": "Noch keine zusätzlichen Informationen.",
+    "name": "Name",
+    "url": "URL",
+    "text": "Text",
+    "remove": "Information entfernen",
+    "moveUp": "Information nach oben verschieben",
+    "moveDown": "Information nach unten verschieben",
+    "showInCards": "In der Kartenansicht anzeigen",
+    "showInCardsTooltip": "Diese Information auf den Sammlungskarten der Startseite anzeigen",
+    "types": { "url": "URL", "text": "Text" },
+    "validation": {
+      "required": "Dieses Feld ist erforderlich",
+      "url": "Gib eine gültige HTTP(S)-URL ein"
+    }
   },
   "dashboard": {
     "title": "Dashboard",
@@ -21,7 +52,10 @@
     "columns": {
       "album": "Album",
       "albums": "Alben",
+      "actions": "Aktionen",
       "artist": "Künstler",
+      "createdBy": "Erstellt von",
+      "details": "Details",
       "image": "Bild",
       "name": "Name",
       "year": "Jahr"
@@ -30,8 +64,21 @@
       "addAlbum": "Album hinzufügen",
       "addArtist": "Künstler hinzufügen",
       "addCollection": "Sammlungszeile hinzufügen",
+      "add": "Hinzufügen",
       "cancel": "Abbrechen",
+      "editArtist": "Künstler bearbeiten",
+      "editAlbum": "Album bearbeiten",
+      "editCollection": "Sammlungsinformationen bearbeiten",
+      "removeCollection": "Sammlungselement entfernen",
       "save": "Speichern"
+    },
+    "modals": {
+      "addArtist": "Künstler hinzufügen",
+      "addAlbum": "Album hinzufügen",
+      "addCollection": "Sammlungszeile hinzufügen",
+      "editArtist": "Künstler bearbeiten",
+      "editAlbum": "Album bearbeiten",
+      "editCollection": "Sammlungsinformationen bearbeiten"
     },
     "fields": {
       "album": "Album",

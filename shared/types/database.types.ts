@@ -3,10 +3,28 @@ export type UserRights = 'user' | 'admin';
 export interface DatabaseArtist {
     id: number;
     name: string;
+    image: string | null;
 }
+
+export interface CollectionUrlMetadata {
+    type: 'url';
+    name: string;
+    value: string;
+    showInCards: boolean;
+}
+
+export interface CollectionTextMetadata {
+    type: 'text';
+    value: string;
+    showInCards: boolean;
+}
+
+export type CollectionMetadata = CollectionUrlMetadata | CollectionTextMetadata;
 
 export interface DatabaseAlbum {
     id: number;
+    artist_id: number | null;
+    artist_name?: string | null;
     name: string;
     year: number | null;
     image: string | null;
@@ -16,7 +34,9 @@ export interface DatabaseCollection {
     id: number;
     artist_id: number;
     album_id: number;
+    created_by_user_id: string | null;
     created_at: string;
+    metadata: CollectionMetadata[];
 }
 
 export interface DatabaseUser {
@@ -36,8 +56,15 @@ export interface DatabaseCollectionItem {
     album_year: number | null;
     artist_id: number;
     artist_name: string;
+    created_by_user_id: string | null;
+    created_by_username: string | null;
+    metadata: CollectionMetadata[];
 }
 
-export type CreateArtistPayload = Pick<DatabaseArtist, 'name'>;
-export type CreateAlbumPayload = Pick<DatabaseAlbum, 'name' | 'year' | 'image'>;
-export type CreateCollectionPayload = Pick<DatabaseCollection, 'artist_id' | 'album_id'>;
+export type CreateArtistPayload = Pick<DatabaseArtist, 'name'> & Partial<Pick<DatabaseArtist, 'image'>>;
+export type CreateAlbumPayload = Pick<DatabaseAlbum, 'artist_id' | 'name' | 'year' | 'image'>;
+export type UpdateArtistPayload = Pick<DatabaseArtist, 'name' | 'image'>;
+export type UpdateAlbumPayload = Pick<DatabaseAlbum, 'artist_id' | 'name' | 'year' | 'image'>;
+export type CreateCollectionPayload = Pick<DatabaseCollection, 'artist_id' | 'album_id' | 'created_by_user_id'>
+    & Partial<Pick<DatabaseCollection, 'metadata'>>;
+export type UpdateCollectionPayload = Pick<DatabaseCollection, 'metadata'>;

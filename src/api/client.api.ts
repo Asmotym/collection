@@ -2,12 +2,15 @@ export class ApiClient {
     private static readonly baseUrl = '/api';
 
     public static async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+        const headers = new Headers(options.headers);
+
+        if (options.body && !headers.has('Content-Type')) {
+            headers.set('Content-Type', 'application/json');
+        }
+
         const response = await fetch(`${ApiClient.baseUrl}${endpoint}`, {
             method: options.method ?? 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers,
-            },
+            headers,
             body: options.body,
         });
 

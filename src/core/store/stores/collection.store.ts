@@ -6,6 +6,9 @@ import type {
     CreateCollectionPayload,
     DatabaseAlbum,
     DatabaseArtist,
+    UpdateAlbumPayload,
+    UpdateArtistPayload,
+    UpdateCollectionPayload,
     DatabaseCollectionItem,
 } from "../../../../shared/types/database.types";
 
@@ -20,12 +23,16 @@ export interface CollectionState {
 export interface CollectionGetters {}
 
 export interface CollectionActions {
-    getAll(): Promise<CollectionItem[]>;
+    getAll(createdByUserId?: string): Promise<CollectionItem[]>;
     getArtists(): Promise<DatabaseArtist[]>;
-    getAlbums(): Promise<DatabaseAlbum[]>;
+    getAlbums(artistId?: number): Promise<DatabaseAlbum[]>;
     createArtist(payload: CreateArtistPayload): Promise<DatabaseArtist>;
     createAlbum(payload: CreateAlbumPayload): Promise<DatabaseAlbum>;
+    updateArtist(id: number, payload: UpdateArtistPayload): Promise<DatabaseArtist>;
+    updateAlbum(id: number, payload: UpdateAlbumPayload): Promise<DatabaseAlbum>;
     createCollection(payload: CreateCollectionPayload): Promise<CollectionItem>;
+    updateCollection(id: number, payload: UpdateCollectionPayload): Promise<CollectionItem>;
+    deleteCollection(id: number): Promise<void>;
 }
 
 export const useCollectionStore = defineStore('collection', {
@@ -36,8 +43,8 @@ export const useCollectionStore = defineStore('collection', {
     }),
     getters: {},
     actions: {
-        async getAll(): Promise<CollectionItem[]> {
-            const response = await api.collection.getAll();
+        async getAll(createdByUserId?: string): Promise<CollectionItem[]> {
+            const response = await api.collection.getAll(createdByUserId);
             this.collection = response as CollectionItem[];
             return this.collection;
         },
@@ -46,8 +53,8 @@ export const useCollectionStore = defineStore('collection', {
             this.artists = response;
             return this.artists;
         },
-        async getAlbums(): Promise<DatabaseAlbum[]> {
-            const response = await api.collection.getAlbums();
+        async getAlbums(artistId?: number): Promise<DatabaseAlbum[]> {
+            const response = await api.collection.getAlbums(artistId);
             this.albums = response;
             return this.albums;
         },
@@ -61,10 +68,59 @@ export const useCollectionStore = defineStore('collection', {
             this.albums.push(album);
             return album;
         },
+        async updateArtist(id: number, payload: UpdateArtistPayload): Promise<DatabaseArtist> {
+            const artist = await api.collection.updateArtist(id, payload);
+            const index = this.artists.findIndex((item) => item.id === id);
+
+            if (index !== -1) {
+                this.artists[index] = artist;
+            }
+
+            for (const album of this.albums) {
+                if (album.artist_id === id) album.artist_name = artist.name;
+            }
+            for (const item of this.collection) {
+                if (item.artist_id === id) item.artist_name = artist.name;
+            }
+            return artist;
+        },
+        async updateAlbum(id: number, payload: UpdateAlbumPayload): Promise<DatabaseAlbum> {
+            const album = await api.collection.updateAlbum(id, payload);
+            const index = this.albums.findIndex((item) => item.id === id);
+
+            if (index !== -1) {
+                this.albums[index] = album;
+            }
+
+            for (const item of this.collection) {
+                if (item.album_id === id) {
+                    item.artist_id = album.artist_id ?? item.artist_id;
+                    item.artist_name = album.artist_name ?? item.artist_name;
+                    item.album_name = album.name;
+                    item.album_year = album.year;
+                    item.album_image = album.image;
+                }
+            }
+            return album;
+        },
         async createCollection(payload: CreateCollectionPayload): Promise<CollectionItem> {
             const item = await api.collection.createCollection(payload);
             this.collection.push(item);
             return item;
+        },
+        async updateCollection(id: number, payload: UpdateCollectionPayload): Promise<CollectionItem> {
+            const item = await api.collection.updateCollection(id, payload);
+            const index = this.collection.findIndex((collectionItem) => collectionItem.id === id);
+
+            if (index !== -1) {
+                this.collection[index] = item;
+            }
+
+            return item;
+        },
+        async deleteCollection(id: number): Promise<void> {
+            await api.collection.deleteCollection(id);
+            this.collection = this.collection.filter((item) => item.id !== id);
         },
     },
 })

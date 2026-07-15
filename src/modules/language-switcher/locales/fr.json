@@ -8,8 +8,39 @@
     "dashboard": "Dashboard"
   },
   "home": {
+    "title": "Ma collection",
     "not_logged_in_title": "Hello World!",
     "not_logged_in_message": ":)"
+  },
+  "validation": {
+    "required": "Ce champ est obligatoire",
+    "httpUrl": "Saisissez une URL HTTP(S) valide"
+  },
+  "imagePreview": {
+    "open": "Ouvrir l’image de {name}",
+    "close": "Fermer l’aperçu de l’image",
+    "copy": "Copier",
+    "copySuccess": "Lien copié dans le presse-papiers",
+    "copyFailure": "Le lien n’a pas pu être copié"
+  },
+  "metadata": {
+    "title": "Informations supplémentaires",
+    "addUrl": "Ajouter une URL",
+    "addText": "Ajouter du texte",
+    "emptyEditor": "Aucune information supplémentaire.",
+    "name": "Nom",
+    "url": "URL",
+    "text": "Texte",
+    "remove": "Supprimer l’information",
+    "moveUp": "Déplacer l’information vers le haut",
+    "moveDown": "Déplacer l’information vers le bas",
+    "showInCards": "Afficher dans la vue en cartes",
+    "showInCardsTooltip": "Afficher cette information sur les cartes de collection de l’écran d’accueil",
+    "types": { "url": "URL", "text": "Texte" },
+    "validation": {
+      "required": "Ce champ est obligatoire",
+      "url": "Saisissez une URL HTTP(S) valide"
+    }
   },
   "dashboard": {
     "title": "Dashboard",
@@ -21,7 +52,10 @@
     "columns": {
       "album": "Album",
       "albums": "Albums",
+      "actions": "Actions",
       "artist": "Artiste",
+      "createdBy": "Créé par",
+      "details": "Détails",
       "image": "Image",
       "name": "Nom",
       "year": "Année"
@@ -30,8 +64,21 @@
       "addAlbum": "Ajouter un album",
       "addArtist": "Ajouter un artiste",
       "addCollection": "Ajouter une ligne",
+      "add": "Ajouter",
       "cancel": "Annuler",
+      "editArtist": "Modifier l’artiste",
+      "editAlbum": "Modifier l’album",
+      "editCollection": "Modifier les informations de collection",
+      "removeCollection": "Supprimer l'élément de collection",
       "save": "Enregistrer"
+    },
+    "modals": {
+      "addArtist": "Ajouter un artiste",
+      "addAlbum": "Ajouter un album",
+      "addCollection": "Ajouter une ligne de collection",
+      "editArtist": "Modifier l’artiste",
+      "editAlbum": "Modifier l’album",
+      "editCollection": "Modifier les informations de collection"
     },
     "fields": {
       "album": "Album",

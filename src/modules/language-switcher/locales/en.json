@@ -8,8 +8,39 @@
     "dashboard": "Dashboard"
   },
   "home": {
+    "title": "My Collection",
     "not_logged_in_title": "Hello World!",
     "not_logged_in_message": ":)"
+  },
+  "validation": {
+    "required": "This field is required",
+    "httpUrl": "Enter a valid HTTP(S) URL"
+  },
+  "imagePreview": {
+    "open": "Open image for {name}",
+    "close": "Close image preview",
+    "copy": "Copy",
+    "copySuccess": "Link copied to the clipboard",
+    "copyFailure": "The link could not be copied"
+  },
+  "metadata": {
+    "title": "Additional information",
+    "addUrl": "Add URL",
+    "addText": "Add text",
+    "emptyEditor": "No additional information yet.",
+    "name": "Name",
+    "url": "URL",
+    "text": "Text",
+    "remove": "Remove information",
+    "moveUp": "Move information up",
+    "moveDown": "Move information down",
+    "showInCards": "Show in cards view",
+    "showInCardsTooltip": "Display this information on collection cards on the home screen",
+    "types": { "url": "URL", "text": "Text" },
+    "validation": {
+      "required": "This field is required",
+      "url": "Enter a valid HTTP(S) URL"
+    }
   },
   "dashboard": {
     "title": "Dashboard",
@@ -21,7 +52,10 @@
     "columns": {
       "album": "Album",
       "albums": "Albums",
+      "actions": "Actions",
       "artist": "Artist",
+      "createdBy": "Created by",
+      "details": "Details",
       "image": "Image",
       "name": "Name",
       "year": "Year"
@@ -30,8 +64,21 @@
       "addAlbum": "Add album",
       "addArtist": "Add artist",
       "addCollection": "Add collection row",
+      "add": "Add",
       "cancel": "Cancel",
+      "editArtist": "Edit artist",
+      "editAlbum": "Edit album",
+      "editCollection": "Edit collection information",
+      "removeCollection": "Remove collection item",
       "save": "Save"
+    },
+    "modals": {
+      "addArtist": "Add artist",
+      "addAlbum": "Add album",
+      "addCollection": "Add collection row",
+      "editArtist": "Edit artist",
+      "editAlbum": "Edit album",
+      "editCollection": "Edit collection information"
     },
     "fields": {
       "album": "Album",

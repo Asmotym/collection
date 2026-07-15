@@ -8,8 +8,39 @@
     "dashboard": "Dashboard"
   },
   "home": {
+    "title": "Mi colección",
     "not_logged_in_title": "Hello World!",
     "not_logged_in_message": ":)"
+  },
+  "validation": {
+    "required": "Este campo es obligatorio",
+    "httpUrl": "Introduce una URL HTTP(S) válida"
+  },
+  "imagePreview": {
+    "open": "Abrir imagen de {name}",
+    "close": "Cerrar vista previa",
+    "copy": "Copiar",
+    "copySuccess": "Enlace copiado al portapapeles",
+    "copyFailure": "No se pudo copiar el enlace"
+  },
+  "metadata": {
+    "title": "Información adicional",
+    "addUrl": "Añadir URL",
+    "addText": "Añadir texto",
+    "emptyEditor": "Todavía no hay información adicional.",
+    "name": "Nombre",
+    "url": "URL",
+    "text": "Texto",
+    "remove": "Eliminar información",
+    "moveUp": "Mover información hacia arriba",
+    "moveDown": "Mover información hacia abajo",
+    "showInCards": "Mostrar en la vista de tarjetas",
+    "showInCardsTooltip": "Mostrar esta información en las tarjetas de colección de la pantalla de inicio",
+    "types": { "url": "URL", "text": "Texto" },
+    "validation": {
+      "required": "Este campo es obligatorio",
+      "url": "Introduce una URL HTTP(S) válida"
+    }
   },
   "dashboard": {
     "title": "Dashboard",
@@ -21,7 +52,10 @@
     "columns": {
       "album": "Álbum",
       "albums": "Álbumes",
+      "actions": "Acciones",
       "artist": "Artista",
+      "createdBy": "Creado por",
+      "details": "Detalles",
       "image": "Imagen",
       "name": "Nombre",
       "year": "Año"
@@ -30,8 +64,21 @@
       "addAlbum": "Añadir álbum",
       "addArtist": "Añadir artista",
       "addCollection": "Añadir fila",
+      "add": "Añadir",
       "cancel": "Cancelar",
+      "editArtist": "Editar artista",
+      "editAlbum": "Editar álbum",
+      "editCollection": "Editar información de la colección",
+      "removeCollection": "Eliminar elemento de colección",
       "save": "Guardar"
+    },
+    "modals": {
+      "addArtist": "Añadir artista",
+      "addAlbum": "Añadir álbum",
+      "addCollection": "Añadir fila de colección",
+      "editArtist": "Editar artista",
+      "editAlbum": "Editar álbum",
+      "editCollection": "Editar información de la colección"
     },
     "fields": {
       "album": "Álbum",
