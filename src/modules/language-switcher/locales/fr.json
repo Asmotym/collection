@@ -10,7 +10,23 @@
   "home": {
     "title": "Ma collection",
     "not_logged_in_title": "Hello World!",
-    "not_logged_in_message": ":)"
+    "not_logged_in_message": ":)",
+    "filters": {
+      "title": "Filtres",
+      "open": "Ouvrir les filtres",
+      "clear": "Effacer les filtres",
+      "activeCount": "Filtres actifs : {count}",
+      "general": "Général",
+      "collectionDetails": "Détails de la collection",
+      "search": "Rechercher",
+      "searchPlaceholder": "Artiste, album ou année",
+      "artist": "Artiste",
+      "album": "Album",
+      "year": "Année",
+      "noOptions": "Aucune option correspondante",
+      "noResultsTitle": "Aucun résultat",
+      "noResultsText": "Essayez de modifier ou d’effacer l’un des filtres."
+    }
   },
   "validation": {
     "required": "Ce champ est obligatoire",
