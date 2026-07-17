@@ -16,8 +16,5 @@ export const routes: RouteRecordRaw[] = [
         path: '/dashboard',
         name: HomeRoutes.Dashboard,
         component: () => import('core/layouts/Dashboard.layout.vue'),
-        meta: {
-            requiresAdmin: true,
-        },
     },
 ]
