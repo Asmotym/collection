@@ -1,6 +1,10 @@
 {
+  "meta": {
+    "title": "Collection — Deine Musiksammlung, gut organisiert",
+    "description": "Katalogisiere und entdecke deine Sammlung aus Vinyl, CDs und physischen Musikveröffentlichungen."
+  },
   "common": {
-    "title": "Rolz",
+    "title": "Collection",
     "disconnect": "Abmelden"
   },
   "navigation": {
@@ -9,8 +13,30 @@
   },
   "home": {
     "title": "Meine Sammlung",
-    "not_logged_in_title": "Hello World!",
-    "not_logged_in_message": ":)",
+    "signedOut": {
+      "kicker": "Deine Regale an einem Ort",
+      "title": "Jede Platte erzählt eine Geschichte. Ordne deine.",
+      "description": "Erstelle einen persönlichen Katalog für deine Schallplatten, CDs und Sondereditionen. Bewahre Cover, Veröffentlichungsdetails und eigene Notizen gemeinsam auf.",
+      "cta": "Mit Discord fortfahren",
+      "caption": "Melde dich an, um auf deine persönliche Sammlung zuzugreifen und sie zu verwalten.",
+      "artLabel": "Die Sammleredition",
+      "featuresLabel": "Was du mit Collection machen kannst",
+      "loading": "Sitzung wird überprüft",
+      "features": {
+        "formats": {
+          "title": "Jedes Format sammeln",
+          "text": "Verwalte Vinyl, CDs und besondere Editionen gemeinsam in einem Katalog."
+        },
+        "details": {
+          "title": "Jedes Detail behalten",
+          "text": "Speichere Cover, Veröffentlichungsdaten, Links und persönliche Notizen zu jedem Exemplar."
+        },
+        "find": {
+          "title": "Alles schnell finden",
+          "text": "Suche und filtere nach Künstler, Album oder Jahr, während du deine Sammlung durchstöberst."
+        }
+      }
+    },
     "details": {
       "open": "Details für {name} öffnen",
       "close": "Details des Sammlungselements schließen"

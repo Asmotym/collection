@@ -1,6 +1,10 @@
 {
+  "meta": {
+    "title": "Collection — Your music collection, organized",
+    "description": "Catalog and explore your collection of vinyl records, CDs, and physical music releases."
+  },
   "common": {
-    "title": "Rolz",
+    "title": "Collection",
     "disconnect": "Logout"
   },
   "navigation": {
@@ -9,8 +13,30 @@
   },
   "home": {
     "title": "My Collection",
-    "not_logged_in_title": "Hello World!",
-    "not_logged_in_message": ":)",
+    "signedOut": {
+      "kicker": "Your shelves, in one place",
+      "title": "Every record tells a story. Keep yours organized.",
+      "description": "Build a personal catalog for the music you own — from vinyl records and CDs to special editions. Keep artwork, release details, and your own notes together.",
+      "cta": "Continue with Discord",
+      "caption": "Sign in to access and manage your personal collection.",
+      "artLabel": "The collection edition",
+      "featuresLabel": "What you can do with Collection",
+      "loading": "Checking your session",
+      "features": {
+        "formats": {
+          "title": "Collect every format",
+          "text": "Keep vinyl, CDs, and unique editions side by side in one catalog."
+        },
+        "details": {
+          "title": "Remember the details",
+          "text": "Save artwork, release data, links, and the notes that make each copy yours."
+        },
+        "find": {
+          "title": "Find anything quickly",
+          "text": "Search and filter by artist, album, or year whenever you browse your shelves."
+        }
+      }
+    },
     "details": {
       "open": "Open details for {name}",
       "close": "Close collection item details"

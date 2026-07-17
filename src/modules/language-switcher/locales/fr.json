@@ -1,6 +1,10 @@
 {
+  "meta": {
+    "title": "Collection — Votre collection musicale, bien organisée",
+    "description": "Cataloguez et explorez votre collection de vinyles, CD et éditions musicales physiques."
+  },
   "common": {
-    "title": "Rolz",
+    "title": "Collection",
     "disconnect": "Se déconnecter"
   },
   "navigation": {
@@ -9,8 +13,30 @@
   },
   "home": {
     "title": "Ma collection",
-    "not_logged_in_title": "Hello World!",
-    "not_logged_in_message": ":)",
+    "signedOut": {
+      "kicker": "Toute votre discothèque au même endroit",
+      "title": "Chaque disque raconte une histoire. Organisez la vôtre.",
+      "description": "Créez le catalogue personnel de vos vinyles, CD et éditions spéciales. Regroupez pochettes, détails de parution et notes personnelles.",
+      "cta": "Continuer avec Discord",
+      "caption": "Connectez-vous pour accéder à votre collection et la gérer.",
+      "artLabel": "L’édition collection",
+      "featuresLabel": "Ce que vous pouvez faire avec Collection",
+      "loading": "Vérification de votre session",
+      "features": {
+        "formats": {
+          "title": "Tous les formats réunis",
+          "text": "Classez vinyles, CD et éditions particulières côte à côte dans un seul catalogue."
+        },
+        "details": {
+          "title": "Conservez chaque détail",
+          "text": "Ajoutez pochettes, données de parution, liens et notes propres à chaque exemplaire."
+        },
+        "find": {
+          "title": "Retrouvez tout rapidement",
+          "text": "Recherchez et filtrez par artiste, album ou année lorsque vous parcourez votre collection."
+        }
+      }
+    },
     "details": {
       "open": "Ouvrir les détails de {name}",
       "close": "Fermer les détails de l’élément de collection"
