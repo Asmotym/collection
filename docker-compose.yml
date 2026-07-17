@@ -7,6 +7,9 @@ services:
       - "8080:80"
     depends_on:
       - backend
+    networks:
+      - proxy
+      - collection-internal
 
   backend:
     build:
@@ -21,6 +24,9 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - proxy
+      - collection-internal
 
   postgres:
     image: postgres:16-alpine
@@ -49,3 +55,9 @@ services:
 
 volumes:
   postgres-data:
+
+networks:
+  proxy:
+    external: true
+  collection-internal:
+    name: collection-internal
