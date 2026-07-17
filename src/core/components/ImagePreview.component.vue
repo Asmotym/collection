@@ -11,9 +11,11 @@
             :src="src"
             :alt="alt"
             class="image-preview-card-image"
+            @load="thumbnailLoaded = true"
             @error="thumbnailFailed = true"
         >
-        <v-icon v-else size="48">mdi-image-broken-variant</v-icon>
+        <v-skeleton-loader v-if="!thumbnailLoaded && !thumbnailFailed" class="image-preview-skeleton" type="image" />
+        <v-icon v-if="thumbnailFailed" size="48">mdi-image-broken-variant</v-icon>
     </button>
     <v-btn
         v-else-if="src"
@@ -27,9 +29,11 @@
             :src="src"
             :alt="alt"
             class="image-preview-thumbnail"
+            @load="thumbnailLoaded = true"
             @error="thumbnailFailed = true"
         >
-        <v-icon v-else size="28">mdi-image-broken-variant</v-icon>
+        <v-skeleton-loader v-if="!thumbnailLoaded && !thumbnailFailed" class="image-preview-skeleton" type="avatar" />
+        <v-icon v-if="thumbnailFailed" size="28">mdi-image-broken-variant</v-icon>
     </v-btn>
     <span v-else>-</span>
 
@@ -51,9 +55,11 @@
                         :src="src ?? undefined"
                         :alt="alt"
                         class="image-preview-large"
+                        @load="largeImageLoaded = true"
                         @error="largeImageFailed = true"
                     >
-                    <v-icon v-else size="96" color="medium-emphasis">
+                    <v-skeleton-loader v-if="!largeImageLoaded && !largeImageFailed" width="100%" type="image" />
+                    <v-icon v-if="largeImageFailed" size="96" color="medium-emphasis">
                         mdi-image-broken-variant
                     </v-icon>
                 </div>
@@ -95,17 +101,22 @@ const { t } = useI18n();
 const dialogOpen = ref(false);
 const thumbnailFailed = ref(false);
 const largeImageFailed = ref(false);
+const thumbnailLoaded = ref(false);
+const largeImageLoaded = ref(false);
 const copyStatus = ref<'success' | 'error' | null>(null);
 
 watch(() => props.src, () => {
     thumbnailFailed.value = false;
     largeImageFailed.value = false;
+    thumbnailLoaded.value = false;
+    largeImageLoaded.value = false;
     copyStatus.value = null;
 });
 
 watch(dialogOpen, (open) => {
     if (open) {
         largeImageFailed.value = false;
+        largeImageLoaded.value = false;
         copyStatus.value = null;
     }
 });
@@ -126,6 +137,7 @@ async function copySource() {
 
 <style scoped>
 .image-preview-trigger {
+    position: relative;
     width: 50px;
     min-width: 50px;
     height: 50px;
@@ -141,6 +153,7 @@ async function copySource() {
 }
 
 .image-preview-card-trigger {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -152,6 +165,11 @@ async function copySource() {
     background: transparent;
     color: inherit;
     cursor: pointer;
+}
+
+.image-preview-skeleton {
+    position: absolute;
+    inset: 0;
 }
 
 .image-preview-card-image {

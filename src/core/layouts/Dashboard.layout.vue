@@ -10,7 +10,14 @@
                     <v-tab value="collection" prepend-icon="mdi-view-grid">{{ t('dashboard.tabs.collection') }}</v-tab>
                 </v-tabs>
 
-                <v-window v-model="tab" class="mt-4">
+                <AppSkeleton
+                    v-if="dashboardLoading"
+                    class="mt-4"
+                    variant="table"
+                    :count="6"
+                    :label="t('common.loading')"
+                />
+                <v-window v-else v-model="tab" class="mt-4">
                     <v-window-item value="artists">
                         <v-btn class="mb-4" color="primary" prepend-icon="mdi-plus" @click="showArtistForm = true">
                             {{ t('dashboard.actions.addArtist') }}
@@ -510,6 +517,8 @@ import CollectionMetadataEditor from 'core/components/CollectionMetadataEditor.c
 import MusicBrainzEditionSelector from 'core/components/MusicBrainzEditionSelector.component.vue';
 import HeaderComponent from 'core/components/Header.component.vue';
 import ImagePreview from 'core/components/ImagePreview.component.vue';
+import AppSkeleton from 'core/components/AppSkeleton.component.vue';
+import { cloneMetadata, isMetadataValid, isOptionalHttpUrl } from 'core/utils/collection-metadata.utils';
 import { store } from 'core/store/index.store';
 import type { CollectionItem } from 'core/store/stores/collection.store';
 import { DiscordService } from 'modules/discord-auth/services/discord.service';
@@ -534,6 +543,7 @@ const discordService = DiscordService.getInstance();
 const collection = ref<CollectionItem[]>([]);
 const artists = ref<DatabaseArtist[]>([]);
 const albums = ref<DatabaseAlbum[]>([]);
+const dashboardLoading = ref(true);
 const saving = ref(false);
 const deletingCollectionId = ref<number | null>(null);
 const deletingCatalogItem = ref(false);
@@ -764,28 +774,8 @@ function requiredRule(value: unknown): true | string {
     return value !== null && value !== undefined && String(value).trim() ? true : t('validation.required');
 }
 
-function isOptionalHttpUrl(value: string): boolean {
-    if (!value.trim()) return true;
-    try {
-        const url = new URL(value.trim());
-        return url.protocol === 'http:' || url.protocol === 'https:';
-    } catch {
-        return false;
-    }
-}
-
 function imageUrlRule(value: unknown): true | string {
     return typeof value !== 'string' || isOptionalHttpUrl(value) ? true : t('validation.httpUrl');
-}
-
-function isMetadataValid(metadata: CollectionMetadata[]): boolean {
-    return metadata.every((entry) => entry.type === 'text'
-        ? entry.value.trim() !== ''
-        : entry.name.trim() !== '' && entry.value.trim() !== '' && isOptionalHttpUrl(entry.value));
-}
-
-function cloneMetadata(metadata: CollectionMetadata[]): CollectionMetadata[] {
-    return metadata.map((entry) => ({ ...entry }));
 }
 
 function getArtistAlbumCount(artistId: number): number {
@@ -1267,7 +1257,13 @@ async function removeCollection(id: number) {
     } finally { deletingCollectionId.value = null; }
 }
 
-onMounted(refreshDashboard);
+onMounted(async () => {
+    try {
+        await refreshDashboard();
+    } finally {
+        dashboardLoading.value = false;
+    }
+});
 </script>
 
 <style scoped>

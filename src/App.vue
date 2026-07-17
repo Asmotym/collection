@@ -4,6 +4,7 @@
       <v-main class="app">
         <router-view></router-view>
       </v-main>
+      <AppFooter />
     </v-app>
   </v-responsive>
 </template>
@@ -11,6 +12,7 @@
 <script setup lang="ts">
 import { watchEffect } from 'vue';
 import { useI18n } from 'vue-i18n';
+import AppFooter from 'core/components/AppFooter.component.vue';
 
 const { locale, t } = useI18n();
 

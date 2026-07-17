@@ -5,11 +5,16 @@
   },
   "common": {
     "title": "Collection",
-    "disconnect": "Cerrar sesión"
+    "disconnect": "Cerrar sesión",
+    "loading": "Cargando contenido"
   },
   "navigation": {
     "home": "Inicio",
     "dashboard": "Dashboard"
+  },
+  "footer": {
+    "label": "Pie de página",
+    "links": "Enlaces del proyecto y de contacto"
   },
   "home": {
     "title": "Mi colección",

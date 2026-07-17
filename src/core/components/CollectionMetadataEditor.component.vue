@@ -107,6 +107,7 @@
 
 <script setup lang="ts">
 import type { CollectionMetadata } from '../../../shared/types/database.types';
+import { isOptionalHttpUrl } from 'core/utils/collection-metadata.utils';
 import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{
@@ -124,18 +125,7 @@ function requiredRule(value: unknown): true | string {
 }
 
 function httpUrlRule(value: unknown): true | string {
-    if (typeof value !== 'string' || !value.trim()) {
-        return true;
-    }
-
-    try {
-        const url = new URL(value.trim());
-        return url.protocol === 'http:' || url.protocol === 'https:'
-            ? true
-            : t('metadata.validation.url');
-    } catch {
-        return t('metadata.validation.url');
-    }
+    return typeof value !== 'string' || isOptionalHttpUrl(value) ? true : t('metadata.validation.url');
 }
 
 function addUrl() {
