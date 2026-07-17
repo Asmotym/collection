@@ -52,17 +52,6 @@ services:
       - proxy
       - collection-internal
 
-  adminer:
-    image: adminer:4
-    ports:
-      - "8081:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - proxy
-      - collection-internal
-
 volumes:
   postgres-data:
 
