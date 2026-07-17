@@ -15,6 +15,7 @@ export interface CollectionUrlMetadata {
 
 export interface CollectionTextMetadata {
     type: 'text';
+    title?: string;
     value: string;
     showInCards: boolean;
 }

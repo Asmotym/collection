@@ -271,19 +271,19 @@
                 >
                     <template #selection="{ item }">
                         <div class="album-select-selection">
-                            <v-img v-if="item.raw.image" :src="item.raw.image" :alt="item.raw.name" cover class="album-select-thumb" />
+                            <v-img v-if="item.image" :src="item.image" :alt="item.name" cover class="album-select-thumb" />
                             <v-icon v-else class="album-select-thumb album-select-fallback">mdi-album</v-icon>
-                            <span>{{ item.raw.name }}</span>
+                            <span>{{ item.name }}</span>
                         </div>
                     </template>
                     <template #item="{ props, item }">
                         <v-list-item v-bind="getAlbumSelectItemProps(props)">
                             <div class="album-select-item">
-                                <v-img v-if="item.raw.image" :src="item.raw.image" :alt="item.raw.name" cover class="album-select-thumb" />
+                                <v-img v-if="item.image" :src="item.image" :alt="item.name" cover class="album-select-thumb" />
                                 <v-icon v-else class="album-select-thumb album-select-fallback">mdi-album</v-icon>
                                 <div class="album-select-copy">
-                                    <v-list-item-title>{{ item.raw.name }}</v-list-item-title>
-                                    <v-list-item-subtitle>{{ item.raw.year ?? '-' }}</v-list-item-subtitle>
+                                    <v-list-item-title>{{ item.name }}</v-list-item-title>
+                                    <v-list-item-subtitle>{{ item.year ?? '-' }}</v-list-item-subtitle>
                                 </div>
                             </div>
                         </v-list-item>

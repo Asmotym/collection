@@ -11,6 +11,10 @@
     "title": "Ma collection",
     "not_logged_in_title": "Hello World!",
     "not_logged_in_message": ":)",
+    "details": {
+      "open": "Ouvrir les détails de {name}",
+      "close": "Fermer les détails de l’élément de collection"
+    },
     "filters": {
       "title": "Filtres",
       "open": "Ouvrir les filtres",
@@ -47,6 +51,7 @@
     "name": "Nom",
     "url": "URL",
     "text": "Texte",
+    "textTitle": "Titre (facultatif)",
     "remove": "Supprimer l’information",
     "moveUp": "Déplacer l’information vers le haut",
     "moveDown": "Déplacer l’information vers le bas",

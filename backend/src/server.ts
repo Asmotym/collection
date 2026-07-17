@@ -191,13 +191,23 @@ function normalizeMetadata(value: unknown): CollectionMetadata[] {
         }
 
         if (rawEntry.type === 'text') {
+            if (rawEntry.title !== undefined && typeof rawEntry.title !== 'string') {
+                throw new Error(`Metadata text entry ${index + 1} has an invalid title`);
+            }
+
+            const title = typeof rawEntry.title === 'string' ? rawEntry.title.trim() : '';
             const text = typeof rawEntry.value === 'string' ? rawEntry.value.trim() : '';
 
             if (!text) {
                 throw new Error(`Metadata text entry ${index + 1} requires content`);
             }
 
-            return { type: 'text', value: text, showInCards };
+            return {
+                type: 'text',
+                ...(title ? { title } : {}),
+                value: text,
+                showInCards,
+            };
         }
 
         throw new Error(`Metadata entry ${index + 1} has an unknown type`);

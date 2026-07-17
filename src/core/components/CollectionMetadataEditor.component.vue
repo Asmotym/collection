@@ -86,15 +86,21 @@
                     />
                 </v-col>
             </v-row>
-            <v-textarea
-                v-else
-                :model-value="entry.value"
-                :label="t('metadata.text')"
-                :rules="[requiredRule]"
-                rows="3"
-                auto-grow
-                @update:model-value="updateTextEntry(index, $event)"
-            />
+            <template v-else>
+                <v-text-field
+                    :model-value="entry.title ?? ''"
+                    :label="t('metadata.textTitle')"
+                    @update:model-value="updateTextEntry(index, 'title', $event)"
+                />
+                <v-textarea
+                    :model-value="entry.value"
+                    :label="t('metadata.text')"
+                    :rules="[requiredRule]"
+                    rows="3"
+                    auto-grow
+                    @update:model-value="updateTextEntry(index, 'value', $event)"
+                />
+            </template>
         </v-sheet>
     </div>
 </template>
@@ -137,7 +143,12 @@ function addUrl() {
 }
 
 function addText() {
-    emit('update:modelValue', [...props.modelValue, { type: 'text', value: '', showInCards: true }]);
+    emit('update:modelValue', [...props.modelValue, {
+        type: 'text',
+        title: '',
+        value: '',
+        showInCards: true,
+    }]);
 }
 
 function removeEntry(index: number) {
@@ -176,12 +187,12 @@ function updateUrlEntry(index: number, field: 'name' | 'value', value: string) {
     }
 }
 
-function updateTextEntry(index: number, value: string) {
+function updateTextEntry(index: number, field: 'title' | 'value', value: string) {
     const entries = [...props.modelValue];
     const entry = entries[index];
 
     if (entry?.type === 'text') {
-        entries[index] = { ...entry, value };
+        entries[index] = { ...entry, [field]: value };
         emit('update:modelValue', entries);
     }
 }
