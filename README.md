@@ -23,12 +23,15 @@ POSTGRES_DB=collection
 POSTGRES_USER=collection
 POSTGRES_PASSWORD=collection
 DATABASE_URL=postgres://collection:collection@postgres:5432/collection
+MUSICBRAINZ_USER_AGENT=Collection/0.1.0 (your-email@example.com)
 VITE_API_BASE_URL=
 VITE_DISCORD_CLIENT_ID=
 VITE_DISCORD_REDIRECT_URI=
 ```
 
 Set `VITE_DISCORD_CLIENT_ID` and `VITE_DISCORD_REDIRECT_URI` when testing Discord login. For the Docker frontend, the default app URL is `http://localhost:8080`.
+
+`MUSICBRAINZ_USER_AGENT` defaults to this repository's contact URL. Override it with an application name, version, and real contact URL or email for your deployment; MusicBrainz requires this identification for API requests.
 
 `VITE_API_BASE_URL` is optional. When set, it can be either the backend origin, such as `http://localhost:3000`, or the full API base, such as `http://localhost:3000/api`.
 

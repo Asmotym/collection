@@ -4,12 +4,40 @@ import type {
     CreateAlbumPayload,
     CreateArtistPayload,
     CreateCollectionPayload,
+    CoverArtResult,
     DatabaseAlbum,
     DatabaseArtist,
+    MusicBrainzArtist,
+    MusicBrainzRelease,
+    MusicBrainzReleaseGroup,
     UpdateAlbumPayload,
     UpdateArtistPayload,
     UpdateCollectionPayload,
 } from "../../../shared/types/database.types";
+
+export async function searchMusicBrainzArtists(query: string) {
+    const params = new URLSearchParams({ query });
+    return await ApiClient.request<MusicBrainzArtist[]>(`/musicbrainz/artists?${params}`);
+}
+
+export async function searchMusicBrainzReleaseGroups(artistMbid: string, query: string) {
+    const params = new URLSearchParams({ query });
+    return await ApiClient.request<MusicBrainzReleaseGroup[]>(
+        `/musicbrainz/artists/${encodeURIComponent(artistMbid)}/release-groups?${params}`,
+    );
+}
+
+export async function getMusicBrainzReleases(releaseGroupMbid: string) {
+    return await ApiClient.request<MusicBrainzRelease[]>(
+        `/musicbrainz/release-groups/${encodeURIComponent(releaseGroupMbid)}/releases`,
+    );
+}
+
+export async function getReleaseGroupCover(releaseGroupMbid: string) {
+    return await ApiClient.request<CoverArtResult>(
+        `/cover-art/release-groups/${encodeURIComponent(releaseGroupMbid)}`,
+    );
+}
 
 export async function getAll(createdByUserId?: string) {
     const params = new URLSearchParams();
@@ -58,11 +86,19 @@ export async function updateArtist(id: number, payload: UpdateArtistPayload) {
     });
 }
 
+export async function deleteArtist(id: number) {
+    return await ApiClient.request<{ id: number }>(`/artists/${id}`, { method: 'DELETE' });
+}
+
 export async function updateAlbum(id: number, payload: UpdateAlbumPayload) {
     return await ApiClient.request<DatabaseAlbum>(`/albums/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(payload),
     });
+}
+
+export async function deleteAlbum(id: number) {
+    return await ApiClient.request<{ id: number }>(`/albums/${id}`, { method: 'DELETE' });
 }
 
 export async function createCollection(payload: CreateCollectionPayload) {

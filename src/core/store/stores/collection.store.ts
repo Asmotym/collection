@@ -30,6 +30,8 @@ export interface CollectionActions {
     createAlbum(payload: CreateAlbumPayload): Promise<DatabaseAlbum>;
     updateArtist(id: number, payload: UpdateArtistPayload): Promise<DatabaseArtist>;
     updateAlbum(id: number, payload: UpdateAlbumPayload): Promise<DatabaseAlbum>;
+    deleteArtist(id: number): Promise<void>;
+    deleteAlbum(id: number): Promise<void>;
     createCollection(payload: CreateCollectionPayload): Promise<CollectionItem>;
     updateCollection(id: number, payload: UpdateCollectionPayload): Promise<CollectionItem>;
     deleteCollection(id: number): Promise<void>;
@@ -80,7 +82,10 @@ export const useCollectionStore = defineStore('collection', {
                 if (album.artist_id === id) album.artist_name = artist.name;
             }
             for (const item of this.collection) {
-                if (item.artist_id === id) item.artist_name = artist.name;
+                if (item.artist_id === id) {
+                    item.artist_name = artist.name;
+                    item.artist_musicbrainz_data = artist.musicbrainz_data;
+                }
             }
             return artist;
         },
@@ -99,9 +104,24 @@ export const useCollectionStore = defineStore('collection', {
                     item.album_name = album.name;
                     item.album_year = album.year;
                     item.album_image = album.image;
+                    item.album_musicbrainz_data = album.musicbrainz_data;
+                    item.artist_musicbrainz_data = this.artists.find((artist) => artist.id === album.artist_id)
+                        ?.musicbrainz_data ?? item.artist_musicbrainz_data;
                 }
             }
             return album;
+        },
+        async deleteArtist(id: number): Promise<void> {
+            await api.collection.deleteArtist(id);
+            const albumIds = new Set(this.albums.filter((album) => album.artist_id === id).map((album) => album.id));
+            this.artists = this.artists.filter((artist) => artist.id !== id);
+            this.albums = this.albums.filter((album) => album.artist_id !== id);
+            this.collection = this.collection.filter((item) => item.artist_id !== id && !albumIds.has(item.album_id));
+        },
+        async deleteAlbum(id: number): Promise<void> {
+            await api.collection.deleteAlbum(id);
+            this.albums = this.albums.filter((album) => album.id !== id);
+            this.collection = this.collection.filter((item) => item.album_id !== id);
         },
         async createCollection(payload: CreateCollectionPayload): Promise<CollectionItem> {
             const item = await api.collection.createCollection(payload);

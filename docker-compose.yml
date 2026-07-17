@@ -23,6 +23,7 @@ services:
       PORT: 3000
       DATABASE_URL: ${DATABASE_URL}
       FRONTEND_URL: ${FRONTEND_URL}
+      MUSICBRAINZ_USER_AGENT: ${MUSICBRAINZ_USER_AGENT:-Collection/0.1.0 (https://github.com/Asmotym/collection)}
     ports:
       - "3000:3000"
     depends_on:

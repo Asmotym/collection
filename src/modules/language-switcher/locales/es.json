@@ -63,6 +63,26 @@
       "url": "Introduce una URL HTTP(S) válida"
     }
   },
+  "musicbrainzDetails": {
+    "title": "Información del lanzamiento y MusicBrainz",
+    "album": "Álbum",
+    "artist": "Artista",
+    "canonicalName": "Nombre en MusicBrainz",
+    "releaseDate": "Primera publicación",
+    "type": "Tipo",
+    "country": "País del lanzamiento",
+    "format": "Formato",
+    "label": "Sello",
+    "catalogNumber": "Número de catálogo",
+    "barcode": "Código de barras",
+    "origin": "Origen",
+    "activePeriod": "Periodo de actividad",
+    "disambiguation": "Detalles",
+    "present": "actualidad",
+    "openAlbum": "Abrir álbum en MusicBrainz",
+    "openEdition": "Abrir lanzamiento",
+    "openArtist": "Abrir artista en MusicBrainz"
+  },
   "dashboard": {
     "title": "Dashboard",
     "tabs": {
@@ -79,6 +99,7 @@
       "details": "Detalles",
       "image": "Imagen",
       "name": "Nombre",
+      "release": "Lanzamiento",
       "year": "Año"
     },
     "actions": {
@@ -89,9 +110,13 @@
       "cancel": "Cancelar",
       "editArtist": "Editar artista",
       "editAlbum": "Editar álbum",
+      "deleteArtist": "Eliminar artista",
+      "deleteAlbum": "Eliminar álbum",
+      "delete": "Eliminar",
       "editCollection": "Editar información de la colección",
       "removeCollection": "Eliminar elemento de colección",
-      "save": "Guardar"
+      "save": "Guardar",
+      "retry": "Reintentar"
     },
     "modals": {
       "addArtist": "Añadir artista",
@@ -108,6 +133,36 @@
       "artistName": "Nombre del artista",
       "image": "URL de imagen",
       "year": "Año"
+    },
+    "musicbrainz": {
+      "searchArtist": "Buscar en MusicBrainz o crear un artista",
+      "searchAlbum": "Buscar en MusicBrainz o crear un álbum",
+      "searchHint": "Escribe al menos 2 caracteres para buscar en MusicBrainz",
+      "customArtistHint": "Este artista no está vinculado a MusicBrainz; introduce un álbum personalizado",
+      "edition": "Lanzamiento",
+      "editionHint": "Opcional — elige un formato común o un lanzamiento específico de MusicBrainz",
+      "editionError": "No se pudieron cargar los lanzamientos del álbum.",
+      "commonReleases": "Comunes",
+      "musicBrainzReleases": "MusicBrainz",
+      "create": "Crear \"{query}\"",
+      "searchError": "La búsqueda de MusicBrainz no está disponible. Aún puedes crear una entrada personalizada.",
+      "coverMissing": "No se encontró ninguna portada. Introduce manualmente una URL de imagen.",
+      "coverError": "La búsqueda de portada falló. Reinténtalo o introduce manualmente una URL de imagen.",
+      "duplicateArtist": "Este artista de MusicBrainz ya se ha añadido.",
+      "duplicateAlbum": "Este álbum de MusicBrainz ya se ha añadido.",
+      "saveError": "No se pudo guardar la entrada. Inténtalo de nuevo."
+    },
+    "delete": {
+      "artistTitle": "Eliminar {name}",
+      "albumTitle": "Eliminar {name}",
+      "simplePrompt": "¿Seguro que quieres eliminar «{name}»?",
+      "artistWarning": "Al eliminar este artista también se eliminarán permanentemente los álbumes y elementos de colección que aparecen a continuación.",
+      "albumWarning": "Al eliminar este álbum también se eliminarán permanentemente los elementos de colección que aparecen a continuación.",
+      "affectedAlbums": "Álbumes ({count})",
+      "affectedCollection": "Elementos de colección ({count})",
+      "unknownYear": "Año desconocido",
+      "unknownUser": "Usuario desconocido",
+      "error": "No se pudo eliminar el elemento. Inténtalo de nuevo."
     }
   }
 }

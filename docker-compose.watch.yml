@@ -25,6 +25,7 @@ services:
       PORT: 3000
       DATABASE_URL: postgres://collection:collection@postgres:5432/collection
       FRONTEND_URL: http://localhost:5173
+      MUSICBRAINZ_USER_AGENT: ${MUSICBRAINZ_USER_AGENT:-Collection/0.1.0 (https://github.com/Asmotym/collection)}
     ports:
       - "3000:3000"
     volumes:

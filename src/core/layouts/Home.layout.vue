@@ -87,6 +87,7 @@
                 <v-col v-for="item in filteredCollection" :key="item.id" cols="12" sm="6" md="3">
                     <v-card
                         class="collection-card h-100 d-flex flex-column"
+                        :class="{ 'collection-card--no-actions': !cardUrlMetadata(item).length }"
                         role="button"
                         tabindex="0"
                         :aria-label="t('home.details.open', { name: item.album_name })"
@@ -183,6 +184,11 @@
                     </template>
                 </v-card-item>
                 <v-card-text>
+                    <MusicBrainzDetails
+                        :artist="selectedItem.artist_musicbrainz_data"
+                        :album="selectedItem.album_musicbrainz_data"
+                        :release="selectedItem.musicbrainz_release_data"
+                    />
                     <h2 class="text-h6 mb-2">{{ t('metadata.title') }}</h2>
                     <v-row>
                         <v-col cols="12" sm="6">
@@ -241,6 +247,7 @@ import { useI18n } from 'vue-i18n';
 import HeaderComponent from 'core/components/Header.component.vue';
 import CollectionMetadataDisplay from 'core/components/CollectionMetadataDisplay.component.vue';
 import ImagePreview from 'core/components/ImagePreview.component.vue';
+import MusicBrainzDetails from 'core/components/MusicBrainzDetails.component.vue';
 import { DiscordService } from 'modules/discord-auth/services/discord.service';
 import { store } from 'core/store/index.store';
 
@@ -359,6 +366,10 @@ onMounted(async () => {
 
 .collection-card {
     cursor: pointer;
+}
+
+.collection-card--no-actions {
+    padding-bottom: 16px;
 }
 
 .collection-card:focus-visible {

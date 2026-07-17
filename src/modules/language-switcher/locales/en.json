@@ -63,6 +63,26 @@
       "url": "Enter a valid HTTP(S) URL"
     }
   },
+  "musicbrainzDetails": {
+    "title": "Release and MusicBrainz information",
+    "album": "Album",
+    "artist": "Artist",
+    "canonicalName": "MusicBrainz name",
+    "releaseDate": "First release",
+    "type": "Type",
+    "country": "Release country",
+    "format": "Format",
+    "label": "Label",
+    "catalogNumber": "Catalog number",
+    "barcode": "Barcode",
+    "origin": "Origin",
+    "activePeriod": "Active period",
+    "disambiguation": "Details",
+    "present": "present",
+    "openAlbum": "Open album on MusicBrainz",
+    "openEdition": "Open release",
+    "openArtist": "Open artist on MusicBrainz"
+  },
   "dashboard": {
     "title": "Dashboard",
     "tabs": {
@@ -79,6 +99,7 @@
       "details": "Details",
       "image": "Image",
       "name": "Name",
+      "release": "Release",
       "year": "Year"
     },
     "actions": {
@@ -89,9 +110,13 @@
       "cancel": "Cancel",
       "editArtist": "Edit artist",
       "editAlbum": "Edit album",
+      "deleteArtist": "Delete artist",
+      "deleteAlbum": "Delete album",
+      "delete": "Delete",
       "editCollection": "Edit collection information",
       "removeCollection": "Remove collection item",
-      "save": "Save"
+      "save": "Save",
+      "retry": "Retry"
     },
     "modals": {
       "addArtist": "Add artist",
@@ -108,6 +133,36 @@
       "artistName": "Artist name",
       "image": "Image URL",
       "year": "Year"
+    },
+    "musicbrainz": {
+      "searchArtist": "Search MusicBrainz or create an artist",
+      "searchAlbum": "Search MusicBrainz or create an album",
+      "searchHint": "Type at least 2 characters to search MusicBrainz",
+      "customArtistHint": "This artist is not linked to MusicBrainz; enter a custom album name",
+      "edition": "Release",
+      "editionHint": "Optional — choose a common format or a specific MusicBrainz release",
+      "editionError": "Album releases could not be loaded.",
+      "commonReleases": "Common",
+      "musicBrainzReleases": "MusicBrainz",
+      "create": "Create \"{query}\"",
+      "searchError": "MusicBrainz search is unavailable. You can still create a custom entry.",
+      "coverMissing": "No cover was found. Enter an image URL manually.",
+      "coverError": "The cover lookup failed. You can retry or enter an image URL manually.",
+      "duplicateArtist": "This MusicBrainz artist has already been added.",
+      "duplicateAlbum": "This MusicBrainz album has already been added.",
+      "saveError": "The entry could not be saved. Please try again."
+    },
+    "delete": {
+      "artistTitle": "Delete {name}",
+      "albumTitle": "Delete {name}",
+      "simplePrompt": "Are you sure you want to delete “{name}”?",
+      "artistWarning": "Deleting this artist will also permanently delete the albums and collection items listed below.",
+      "albumWarning": "Deleting this album will also permanently delete the collection items listed below.",
+      "affectedAlbums": "Albums ({count})",
+      "affectedCollection": "Collection items ({count})",
+      "unknownYear": "Unknown year",
+      "unknownUser": "Unknown user",
+      "error": "The item could not be deleted. Please try again."
     }
   }
 }
