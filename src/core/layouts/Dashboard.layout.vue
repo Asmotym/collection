@@ -87,7 +87,18 @@
                             persistent-hint
                             @update:search="scheduleArtistSearch"
                             @update:model-value="selectArtistSuggestion"
-                        />
+                        >
+                            <template #item="{ props, item }">
+                                <v-list-subheader v-if="item.kind === 'header'">{{ item.title }}</v-list-subheader>
+                                <v-list-item v-else v-bind="getAutocompleteItemProps(props)">
+                                    <v-list-item-title>{{ item.title }}</v-list-item-title>
+                                    <v-list-item-subtitle v-if="item.props.subtitle">{{ item.props.subtitle }}</v-list-item-subtitle>
+                                    <a v-if="item.externalUrl" :href="item.externalUrl" target="_blank" rel="noopener noreferrer" class="catalog-source-link" @click.stop>
+                                        {{ item.externalUrl.includes('discogs.com') ? 'Data provided by Discogs' : `Open on ${item.externalUrl.includes('last.fm') ? 'Last.fm' : 'MusicBrainz'}` }}
+                                    </a>
+                                </v-list-item>
+                            </template>
+                        </v-autocomplete>
                         <v-alert
                             v-if="artistSearchError"
                             type="warning"
@@ -127,15 +138,14 @@
                                 clearable
                                 :loading="albumSearching"
                                 :label="t('dashboard.musicbrainz.searchAlbum')"
-                                :hint="selectedArtistMusicBrainz
-                                    ? t('dashboard.musicbrainz.searchHint')
-                                    : t('dashboard.musicbrainz.customArtistHint')"
+                                :hint="t('dashboard.musicbrainz.searchHint')"
                                 persistent-hint
                                 @update:search="scheduleAlbumSearch"
                                 @update:model-value="selectAlbumSuggestion"
                             >
                                 <template #item="{ props, item }">
-                                    <v-list-item v-bind="getAutocompleteItemProps(props)">
+                                    <v-list-subheader v-if="item.kind === 'header'">{{ item.title }}</v-list-subheader>
+                                    <v-list-item v-else v-bind="getAutocompleteItemProps(props)">
                                         <div class="album-select-item">
                                             <v-icon
                                                 v-if="item.kind === 'custom'"
@@ -171,6 +181,9 @@
                                                 <v-list-item-subtitle v-if="item.props.subtitle">
                                                     {{ item.props.subtitle }}
                                                 </v-list-item-subtitle>
+                                                <a v-if="item.externalUrl" :href="item.externalUrl" target="_blank" rel="noopener noreferrer" class="catalog-source-link" @click.stop>
+                                                    {{ item.externalUrl.includes('discogs.com') ? 'Data provided by Discogs' : `Open on ${item.externalUrl.includes('last.fm') ? 'Last.fm' : 'MusicBrainz'}` }}
+                                                </a>
                                             </div>
                                         </div>
                                     </v-list-item>
@@ -220,7 +233,25 @@
                                     :label="t('dashboard.fields.image')"
                                     :rules="[imageUrlRule]"
                                     :loading="coverStatus === 'loading'"
+                                    @update:model-value="markManualCover"
                                 />
+                                <div v-if="coverCandidates.length" class="d-flex flex-wrap ga-2 mb-3">
+                                    <div
+                                        v-for="candidate in coverCandidates"
+                                        :key="`${candidate.source}:${candidate.entityType}:${candidate.entityId}`"
+                                        class="cover-candidate"
+                                        role="button"
+                                        tabindex="0"
+                                        :title="candidate.source === 'discogs' ? 'Data provided by Discogs' : candidate.source === 'fanart' ? 'Album art provided by Fanart.tv' : 'Cover Art Archive'"
+                                        @click="selectCover(candidate)"
+                                        @keydown.enter.prevent="selectCover(candidate)"
+                                    >
+                                        <v-img :src="candidate.previewUrl" width="72" height="72" cover />
+                                        <a :href="candidate.externalUrl" target="_blank" rel="noopener noreferrer" @click.stop>
+                                            {{ candidate.source === 'discogs' ? 'Discogs' : candidate.source === 'fanart' ? 'Fanart.tv' : 'CAA' }}
+                                        </a>
+                                    </div>
+                                </div>
                                 <v-alert
                                     v-if="coverStatus === 'missing'"
                                     type="info"
@@ -256,6 +287,7 @@
                             <MusicBrainzEditionSelector
                                 v-model="collectionForm.musicbrainz_release_data"
                                 :release-group="selectedAlbumReleaseGroup"
+                                :catalog-reference="selectedAlbumCatalogReference"
                             />
                             <CollectionMetadataEditor v-model="collectionForm.metadata" />
                         </template>
@@ -280,17 +312,71 @@
     <v-dialog v-model="showCollectionEdit" max-width="850" @after-leave="resetCollectionEdit">
         <v-card :title="t('dashboard.modals.editCollection')">
             <v-card-text>
+                <v-alert type="info" variant="tonal" density="compact" class="mb-4">
+                    {{ t('dashboard.edit.sharedFieldsHint') }}
+                </v-alert>
+                <h2 class="text-subtitle-1 font-weight-bold mb-2">{{ t('dashboard.steps.artist') }}</h2>
+                <v-row dense>
+                    <v-col cols="12" md="6">
+                        <v-text-field
+                            v-model="collectionEditForm.artistName"
+                            :label="t('dashboard.fields.artistName')"
+                            :rules="[requiredRule]"
+                        />
+                    </v-col>
+                    <v-col cols="12" md="6">
+                        <v-text-field
+                            v-model="collectionEditForm.artistImage"
+                            :label="t('dashboard.fields.artistImage')"
+                            :rules="[imageUrlRule]"
+                        />
+                    </v-col>
+                </v-row>
+
+                <h2 class="text-subtitle-1 font-weight-bold mb-2">{{ t('dashboard.steps.album') }}</h2>
+                <v-row dense>
+                    <v-col cols="12" md="6">
+                        <v-text-field
+                            v-model="collectionEditForm.albumName"
+                            :label="t('dashboard.fields.albumName')"
+                            :rules="[requiredRule]"
+                        />
+                    </v-col>
+                    <v-col cols="12" md="6">
+                        <v-text-field
+                            v-model.number="collectionEditForm.albumYear"
+                            :label="t('dashboard.fields.year')"
+                            type="number"
+                            min="0"
+                        />
+                    </v-col>
+                    <v-col cols="12">
+                        <v-text-field
+                            v-model="collectionEditForm.albumImage"
+                            :label="t('dashboard.fields.albumImage')"
+                            :rules="[imageUrlRule]"
+                        />
+                    </v-col>
+                </v-row>
+
+                <h2 class="text-subtitle-1 font-weight-bold mb-2">{{ t('dashboard.steps.informations') }}</h2>
                 <MusicBrainzEditionSelector
                     v-model="collectionEditRelease"
                     :release-group="collectionEditReleaseGroup"
+                    :catalog-reference="collectionEditCatalogReference"
                 />
                 <CollectionMetadataEditor v-model="collectionEditMetadata" />
+                <v-alert v-if="collectionEditSaveError" type="error" variant="tonal" density="compact" class="mt-3">
+                    {{ collectionEditSaveError }}
+                </v-alert>
             </v-card-text>
             <v-card-actions class="justify-end">
-                <v-btn variant="text" @click="cancelCollectionEdit">{{ t('dashboard.actions.cancel') }}</v-btn>
+                <v-btn variant="text" :disabled="saving" @click="cancelCollectionEdit">
+                    {{ t('dashboard.actions.cancel') }}
+                </v-btn>
                 <v-btn
                     color="primary"
-                    :disabled="!isMetadataValid(collectionEditMetadata)"
+                    :disabled="!collectionEditFormValid"
                     :loading="saving"
                     @click="saveCollectionEdit"
                 >
@@ -323,6 +409,16 @@ import type {
     MusicBrainzRelease,
     MusicBrainzReleaseGroup,
 } from '../../../shared/types/database.types';
+import type {
+    CatalogAlbumResult,
+    CatalogArtistResult,
+    CatalogCoverCandidate,
+    CatalogCoverReference,
+    CatalogExternalReference,
+    CatalogProviderSection,
+    CatalogProviderSource,
+    CatalogSource,
+} from '../../../shared/types/catalog.types';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
@@ -342,6 +438,7 @@ const editingCollectionId = ref<number | null>(null);
 interface ArtistDraft {
     name: string;
     musicbrainz_data: MusicBrainzArtist | null;
+    external_references: CatalogExternalReference[];
 }
 
 interface AlbumDraft {
@@ -349,14 +446,18 @@ interface AlbumDraft {
     year: number | null | '';
     image: string;
     musicbrainz_data: MusicBrainzReleaseGroup | null;
+    external_references: CatalogExternalReference[];
+    image_reference: CatalogCoverReference;
 }
 
 interface AutocompleteItem {
     key: string;
     title: string;
-    props: { subtitle?: string; prependIcon?: string };
-    kind: 'local' | 'remote' | 'custom';
+    props: { subtitle?: string; prependIcon?: string; disabled?: boolean };
+    kind: 'local' | 'remote' | 'custom' | 'header';
     releaseGroupId?: string;
+    catalogResult?: CatalogAlbumResult;
+    externalUrl?: string;
     image?: string | null;
 }
 
@@ -372,20 +473,32 @@ const collectionForm = ref<{
 const collectionEditMetadata = ref<CollectionMetadata[]>([]);
 const collectionEditRelease = ref<CollectionReleaseSelection | null>(null);
 const collectionEditReleaseGroup = ref<MusicBrainzReleaseGroup | null>(null);
+const collectionEditCatalogReference = ref<CatalogExternalReference | null>(null);
+const collectionEditForm = ref({
+    artistName: '',
+    artistImage: '',
+    albumName: '',
+    albumYear: null as number | null | '',
+    albumImage: '',
+    albumImageSource: 'manual' as 'manual' | 'cover-art-archive' | 'discogs' | 'fanart',
+    albumImageReference: null as CatalogCoverReference | null,
+});
+const collectionEditSaveError = ref('');
 
 const artistSearch = ref('');
 const artistSelectionKey = ref<string | null>(null);
-const artistSuggestions = ref<MusicBrainzArtist[]>([]);
+const artistSections = ref<CatalogProviderSection<CatalogArtistResult>[]>([]);
 const artistSearching = ref(false);
 const artistSearchError = ref('');
 const albumSearch = ref('');
 const albumSelectionKey = ref<string | null>(null);
-const albumSuggestions = ref<MusicBrainzReleaseGroup[]>([]);
-const albumDefaultSuggestions = ref<MusicBrainzReleaseGroup[]>([]);
+const albumSections = ref<CatalogProviderSection<CatalogAlbumResult>[]>([]);
+const albumDefaultSections = ref<CatalogProviderSection<CatalogAlbumResult>[]>([]);
 const albumSearching = ref(false);
 const albumSearchError = ref('');
 const albumCoverErrors = ref(new Set<string>());
 const coverStatus = ref<'idle' | 'loading' | 'found' | 'missing' | 'error'>('idle');
+const coverCandidates = ref<CatalogCoverCandidate[]>([]);
 const collectionSaveError = ref('');
 let artistSearchTimer: ReturnType<typeof setTimeout> | undefined;
 let albumSearchTimer: ReturnType<typeof setTimeout> | undefined;
@@ -399,12 +512,21 @@ const selectedExistingArtist = computed(() => selectedArtistId.value === null
 const artistSelected = computed(() => selectedExistingArtist.value !== null || artistDraft.value !== null);
 const selectedArtistMusicBrainz = computed(() =>
     selectedExistingArtist.value?.musicbrainz_data ?? artistDraft.value?.musicbrainz_data ?? null);
+const selectedArtistReferences = computed<CatalogExternalReference[]>(() =>
+    selectedExistingArtist.value?.external_references ?? artistDraft.value?.external_references ?? []);
+const selectedArtistName = computed(() => selectedExistingArtist.value?.name ?? artistDraft.value?.name ?? '');
 const selectedExistingAlbum = computed(() => selectedAlbumId.value === null
     ? null
     : albums.value.find((album) => album.id === selectedAlbumId.value) ?? null);
 const albumSelected = computed(() => selectedExistingAlbum.value !== null || albumDraft.value !== null);
 const selectedAlbumReleaseGroup = computed(() =>
     selectedExistingAlbum.value?.musicbrainz_data ?? albumDraft.value?.musicbrainz_data ?? null);
+const selectedAlbumReferences = computed<CatalogExternalReference[]>(() =>
+    selectedExistingAlbum.value?.external_references ?? albumDraft.value?.external_references ?? []);
+const selectedAlbumCatalogReference = computed<CatalogExternalReference | null>(() =>
+    selectedAlbumReferences.value.find((reference) => reference.source === 'discogs')
+    ?? selectedAlbumReferences.value.find((reference) => reference.source === 'musicbrainz')
+    ?? selectedAlbumReferences.value[0] ?? null);
 
 const currentUserAlbumIds = computed(() => {
     const userId = discordService.user.value?.id;
@@ -434,30 +556,22 @@ const artistAutocompleteItems = computed<AutocompleteItem[]>(() => {
         for (const artist of artists.value) {
             if (normalizeName(artist.name).includes(normalizedQuery)) localMatchMap.set(artist.id, artist);
         }
-        const suggestedIds = new Set(artistSuggestions.value.map((artist) => artist.id));
-        for (const artist of artists.value) {
-            if (artist.musicbrainz_data && suggestedIds.has(artist.musicbrainz_data.id)) {
-                localMatchMap.set(artist.id, artist);
-            }
-        }
     }
     const localMatches = [...localMatchMap.values()];
-    const localMusicBrainzIds = new Set(artists.value
-        .map((artist) => artist.musicbrainz_data?.id)
-        .filter((id): id is string => Boolean(id)));
+    const localReferenceKeys = new Set(artists.value.flatMap((artist) => artist.external_references ?? [])
+        .map((reference) => `${reference.source}:${reference.kind}:${reference.externalId}`));
     const exactLocalMatch = artists.value.some((artist) => normalizeName(artist.name) === normalizedQuery);
-    const remoteItems = artistSuggestions.value
-        .filter((artist) => !localMusicBrainzIds.has(artist.id))
-        .map((artist) => ({
-            key: `mb:${artist.id}`,
-            title: artist.name,
-            props: {
-                subtitle: [t('dashboard.musicbrainz.musicBrainzResult'), formatArtistSubtitle(artist)]
-                    .filter(Boolean).join(' · '),
-                prependIcon: 'mdi-database-music',
-            },
-            kind: 'remote' as const,
-        }));
+    const remoteItems = artistSections.value.flatMap((section) => {
+        if (section.status !== 'ok' || section.items.length === 0) return [];
+        const items: AutocompleteItem[] = [{ key: `header:${section.source}`, title: providerLabel(section.source),
+            props: { disabled: true }, kind: 'header' }];
+        items.push(...section.items.filter((artist) => !localReferenceKeys.has(referenceKey(artist))).map((artist) => ({
+            key: `remote:${artist.source}:${encodeURIComponent(artist.externalId)}`, title: artist.name,
+            props: { subtitle: artist.subtitle, prependIcon: providerIcon(artist.source) }, kind: 'remote',
+            externalUrl: artist.externalUrl,
+        } satisfies AutocompleteItem)));
+        return items.length > 1 ? items : [];
+    });
     return [
         ...localMatches.map((artist) => ({
             key: `local:${artist.id}`,
@@ -487,36 +601,26 @@ const albumAutocompleteItems = computed<AutocompleteItem[]>(() => {
             localMatchMap.set(album.id, album);
         }
     }
-    const suggestedIds = new Set(albumSuggestions.value.map((album) => album.id));
-    for (const album of availableLocalAlbums.value) {
-        if (album.musicbrainz_data && suggestedIds.has(album.musicbrainz_data.id)) {
-            localMatchMap.set(album.id, album);
-        }
-    }
     const localMatches = [...localMatchMap.values()];
     const allArtistAlbums = selectedArtistId.value === null
         ? []
         : albums.value.filter((album) => album.artist_id === selectedArtistId.value);
-    const localMusicBrainzIds = new Set(allArtistAlbums
-        .map((album) => album.musicbrainz_data?.id)
-        .filter((id): id is string => Boolean(id)));
+    const localReferenceKeys = new Set(allArtistAlbums.flatMap((album) => album.external_references ?? [])
+        .map(referenceKey));
     const exactLocalMatch = allArtistAlbums.some((album) => normalizeName(album.name) === normalizedQuery);
-    const remoteItems = albumSuggestions.value
-        .filter((releaseGroup) => !localMusicBrainzIds.has(releaseGroup.id))
-        .map((releaseGroup) => ({
-            key: `mb:${releaseGroup.id}`,
-            title: releaseGroup.title,
-            props: {
-                subtitle: [
-                    t('dashboard.musicbrainz.musicBrainzResult'),
-                    releaseGroup['first-release-date'],
-                    releaseGroup.disambiguation,
-                ].filter(Boolean).join(' · '),
-                prependIcon: 'mdi-album',
-            },
-            kind: 'remote' as const,
-            releaseGroupId: releaseGroup.id,
-        }));
+    const remoteItems = albumSections.value.flatMap((section) => {
+        if (section.status !== 'ok' || section.items.length === 0) return [];
+        const items: AutocompleteItem[] = [{ key: `header:${section.source}`, title: providerLabel(section.source),
+            props: { disabled: true }, kind: 'header' }];
+        items.push(...section.items.filter((album) => !localReferenceKeys.has(referenceKey(album))).map((album) => ({
+            key: `remote:${album.source}:${encodeURIComponent(album.externalId)}`, title: album.title,
+            props: { subtitle: [album.year, album.kind === 'release' ? 'Release' : 'Album'].filter(Boolean).join(' · '),
+                prependIcon: providerIcon(album.source) }, kind: 'remote', image: album.cover?.previewUrl,
+            releaseGroupId: album.source === 'musicbrainz' ? album.externalId : undefined, catalogResult: album,
+            externalUrl: album.externalUrl,
+        } satisfies AutocompleteItem)));
+        return items.length > 1 ? items : [];
+    });
     return [
         ...localMatches.map((album) => ({
             key: `local:${album.id}`,
@@ -564,6 +668,13 @@ const collectionFormValid = computed(() => artistSelected.value
     && artistDraftValid.value
     && albumDraftValid.value
     && isMetadataValid(collectionForm.value.metadata));
+const collectionEditFormValid = computed(() => collectionEditForm.value.artistName.trim() !== ''
+    && collectionEditForm.value.albumName.trim() !== ''
+    && (collectionEditForm.value.albumYear === null || collectionEditForm.value.albumYear === ''
+        || (Number.isInteger(collectionEditForm.value.albumYear) && collectionEditForm.value.albumYear >= 0))
+    && isOptionalHttpUrl(collectionEditForm.value.artistImage)
+    && isOptionalHttpUrl(collectionEditForm.value.albumImage)
+    && isMetadataValid(collectionEditMetadata.value));
 
 function requiredRule(value: unknown): true | string {
     return value !== null && value !== undefined && String(value).trim() ? true : t('validation.required');
@@ -577,6 +688,7 @@ function formatCollectionRelease(release: CollectionReleaseSelection | null): st
     if (!release) return '-';
     const commonRelease = release as CommonReleaseSelection;
     if (commonRelease.source === 'common') return commonRelease.format;
+    if (release.source === 'discogs') return `Discogs #${release.id}`;
     const musicBrainzRelease = release as MusicBrainzRelease;
     const formats = [...new Set((musicBrainzRelease.media ?? [])
         .map((medium) => medium.format).filter(Boolean))].join(', ');
@@ -584,8 +696,22 @@ function formatCollectionRelease(release: CollectionReleaseSelection | null): st
         .filter(Boolean).join(' · ') || musicBrainzRelease.title;
 }
 
-function formatArtistSubtitle(artist: MusicBrainzArtist): string {
-    return [artist.type, artist.disambiguation, artist.area?.name ?? artist.country].filter(Boolean).join(' · ');
+function providerLabel(source: CatalogProviderSource): string {
+    return source === 'musicbrainz' ? 'MusicBrainz' : source === 'discogs' ? 'Discogs'
+        : source === 'fanart' ? 'Fanart.tv' : 'Last.fm';
+}
+
+function providerIcon(source: CatalogSource): string {
+    return source === 'musicbrainz' ? 'mdi-database-music' : source === 'discogs' ? 'mdi-record-circle-outline' : 'mdi-radio';
+}
+
+function referenceKey(reference: Pick<CatalogExternalReference, 'source' | 'kind' | 'externalId'>): string {
+    return `${reference.source}:${reference.kind}:${reference.externalId}`;
+}
+
+function catalogSearchError<T>(sections: CatalogProviderSection<T>[]): string {
+    const failed = sections.filter((section) => section.status === 'error').map((section) => providerLabel(section.source));
+    return failed.length ? `${failed.join(', ')}: ${t('dashboard.musicbrainz.searchError')}` : '';
 }
 
 function scheduleArtistSearch(value: string | null) {
@@ -595,18 +721,21 @@ function scheduleArtistSearch(value: string | null) {
     artistSearchError.value = '';
     const query = value?.trim() ?? '';
     if (query.length < 2) {
-        artistSuggestions.value = [];
+        artistSections.value = [];
         artistSearching.value = false;
         return;
     }
     artistSearchTimer = setTimeout(async () => {
         artistSearching.value = true;
         try {
-            const results = await api.collection.searchMusicBrainzArtists(query);
-            if (requestId === artistSearchRequest) artistSuggestions.value = results;
+            const results = await api.collection.searchCatalogArtists(query);
+            if (requestId === artistSearchRequest) {
+                artistSections.value = results;
+                artistSearchError.value = catalogSearchError(results);
+            }
         } catch {
             if (requestId === artistSearchRequest) {
-                artistSuggestions.value = [];
+                artistSections.value = [];
                 artistSearchError.value = t('dashboard.musicbrainz.searchError');
             }
         } finally {
@@ -624,21 +753,23 @@ function selectArtistSuggestion(key: string | null) {
     if (key.startsWith('local:')) {
         const id = Number(key.slice('local:'.length));
         if (artists.value.some((artist) => artist.id === id)) selectedArtistId.value = id;
-    } else if (key.startsWith('mb:')) {
-        const id = key.slice('mb:'.length);
-        const artist = artistSuggestions.value.find((item) => item.id === id);
-        if (artist) artistDraft.value = { name: artist.name, musicbrainz_data: artist };
+    } else if (key.startsWith('remote:')) {
+        const [, source, encodedId] = key.split(':');
+        const id = decodeURIComponent(encodedId ?? '');
+        const artist = artistSections.value.find((section) => section.source === source)?.items
+            .find((item) => item.externalId === id);
+        if (artist) artistDraft.value = {
+            name: artist.name,
+            musicbrainz_data: artist.source === 'musicbrainz' ? artist.rawMusicBrainz as MusicBrainzArtist : null,
+            external_references: [{ source: artist.source, kind: 'artist', externalId: artist.externalId,
+                externalUrl: artist.externalUrl, musicBrainzId: artist.musicBrainzId }],
+        };
     } else if (key.startsWith('custom:')) {
         artistDraft.value = {
-            name: key.slice('custom:'.length), musicbrainz_data: null,
+            name: key.slice('custom:'.length), musicbrainz_data: null, external_references: [],
         };
     }
-    if (artistSelected.value) {
-        collectionStep.value = 2;
-        void loadSelectedArtistAlbums();
-    } else {
-        collectionStep.value = 1;
-    }
+    if (artistSelected.value) void loadSelectedArtistAlbums();
 }
 
 function scheduleAlbumSearch(value: string | null) {
@@ -647,28 +778,24 @@ function scheduleAlbumSearch(value: string | null) {
     if (albumSearchTimer) clearTimeout(albumSearchTimer);
     albumSearchError.value = '';
     const query = value?.trim() ?? '';
-    const artistMbid = selectedArtistMusicBrainz.value?.id;
-    if (!artistMbid) {
-        albumSuggestions.value = [];
-        albumSearching.value = false;
-        return;
-    }
     if (query.length < 2) {
         const normalizedQuery = normalizeName(query);
-        albumSuggestions.value = normalizedQuery
-            ? albumDefaultSuggestions.value.filter((item) => normalizeName(item.title).includes(normalizedQuery))
-            : albumDefaultSuggestions.value;
+        albumSections.value = albumDefaultSections.value.map((section) => ({ ...section,
+            items: normalizedQuery ? section.items.filter((item) => normalizeName(item.title).includes(normalizedQuery)) : section.items }));
         albumSearching.value = false;
         return;
     }
     albumSearchTimer = setTimeout(async () => {
         albumSearching.value = true;
         try {
-            const results = await api.collection.searchMusicBrainzReleaseGroups(artistMbid, query);
-            if (requestId === albumSearchRequest) albumSuggestions.value = results;
+            const results = await searchAlbums(query);
+            if (requestId === albumSearchRequest) {
+                albumSections.value = results;
+                albumSearchError.value = catalogSearchError(results);
+            }
         } catch {
             if (requestId === albumSearchRequest) {
-                albumSuggestions.value = [];
+                albumSections.value = [];
                 albumSearchError.value = t('dashboard.musicbrainz.searchError');
             }
         } finally {
@@ -678,26 +805,34 @@ function scheduleAlbumSearch(value: string | null) {
 }
 
 async function loadSelectedArtistAlbums() {
-    const artistMbid = selectedArtistMusicBrainz.value?.id;
-    if (!artistMbid) return;
+    if (!selectedArtistName.value) return;
     const requestId = ++albumSearchRequest;
     albumSearching.value = true;
     albumSearchError.value = '';
     try {
-        const results = await api.collection.searchMusicBrainzReleaseGroups(artistMbid, '');
+        const results = await searchAlbums('');
         if (requestId !== albumSearchRequest) return;
-        albumDefaultSuggestions.value = results;
+        albumDefaultSections.value = results;
         const query = normalizeName(albumSearch.value);
-        albumSuggestions.value = results.filter((item) => !query || normalizeName(item.title).includes(query));
+        albumSections.value = results.map((section) => ({ ...section,
+            items: section.items.filter((item) => !query || normalizeName(item.title).includes(query)) }));
+        albumSearchError.value = catalogSearchError(results);
     } catch {
         if (requestId === albumSearchRequest) {
-            albumDefaultSuggestions.value = [];
-            albumSuggestions.value = [];
+            albumDefaultSections.value = [];
+            albumSections.value = [];
             albumSearchError.value = t('dashboard.musicbrainz.searchError');
         }
     } finally {
         if (requestId === albumSearchRequest) albumSearching.value = false;
     }
+}
+
+function searchAlbums(query: string) {
+    const bySource = new Map(selectedArtistReferences.value.map((reference) => [reference.source, reference.externalId]));
+    return api.collection.searchCatalogAlbums({ artistName: selectedArtistName.value, query,
+        musicbrainzId: selectedArtistMusicBrainz.value?.id ?? bySource.get('musicbrainz'),
+        discogsId: bySource.get('discogs'), lastfmId: bySource.get('lastfm') });
 }
 
 function selectAlbumSuggestion(key: string | null) {
@@ -706,46 +841,63 @@ function selectAlbumSuggestion(key: string | null) {
     albumDraft.value = null;
     collectionForm.value.musicbrainz_release_data = null;
     coverRequest += 1;
+    coverCandidates.value = [];
     coverStatus.value = 'idle';
     if (!key) return;
     if (key.startsWith('local:')) {
         const id = Number(key.slice('local:'.length));
         if (availableLocalAlbums.value.some((album) => album.id === id)) selectedAlbumId.value = id;
-        if (selectedAlbumId.value !== null) collectionStep.value = 3;
         return;
     }
     if (key.startsWith('custom:')) {
         albumDraft.value = {
             name: key.slice('custom:'.length), year: null, image: '', musicbrainz_data: null,
+            external_references: [], image_reference: { source: 'manual' },
         };
-        collectionStep.value = 3;
         return;
     }
-    if (!key.startsWith('mb:')) return;
-    const id = key.slice('mb:'.length);
-    const releaseGroup = albumSuggestions.value.find((item) => item.id === id)
-        ?? albumDefaultSuggestions.value.find((item) => item.id === id);
-    if (!releaseGroup) return;
-    const yearText = releaseGroup['first-release-date']?.match(/^\d{4}/)?.[0];
+    if (!key.startsWith('remote:')) return;
+    const [, source, encodedId] = key.split(':');
+    const id = decodeURIComponent(encodedId ?? '');
+    const result = [...albumSections.value, ...albumDefaultSections.value]
+        .find((section) => section.source === source)?.items.find((item) => item.externalId === id);
+    if (!result) return;
+    const reference: CatalogExternalReference = { source: result.source, kind: result.kind,
+        externalId: result.externalId, externalUrl: result.externalUrl, musicBrainzId: result.musicBrainzId };
+    const imageReference: CatalogCoverReference = result.cover?.source === 'discogs'
+        ? { source: 'discogs', kind: result.cover.entityType as 'master' | 'release', externalId: result.cover.entityId,
+            externalUrl: result.cover.externalUrl }
+        : result.cover ? { source: 'cover-art-archive' } : { source: 'manual' };
     albumDraft.value = {
-        name: releaseGroup.title,
-        year: yearText ? Number(yearText) : null,
-        image: '',
-        musicbrainz_data: releaseGroup,
+        name: result.title, year: result.year ?? null, image: result.cover?.previewUrl ?? '',
+        musicbrainz_data: result.source === 'musicbrainz' ? result.rawMusicBrainz as MusicBrainzReleaseGroup : null,
+        external_references: [reference], image_reference: imageReference,
     };
-    collectionStep.value = 3;
-    void loadCover(releaseGroup.id);
+    if (result.kind === 'release' && result.source === 'discogs') {
+        collectionForm.value.musicbrainz_release_data = {
+            source: 'discogs', kind: 'release', id: result.externalId, externalUrl: result.externalUrl,
+        };
+    }
+    if (result.cover) coverCandidates.value = [result.cover];
+    void loadCover();
 }
 
-async function loadCover(releaseGroupMbid: string) {
+async function loadCover() {
     const requestId = ++coverRequest;
     const initialImage = albumDraft.value?.image ?? '';
     coverStatus.value = 'loading';
     try {
-        const result = await api.collection.getReleaseGroupCover(releaseGroupMbid);
+        if (!albumDraft.value) return;
+        const sections = await api.collection.searchCatalogCovers({ artistName: selectedArtistName.value,
+            albumTitle: albumDraft.value.name, references: albumDraft.value.external_references });
         if (requestId !== coverRequest || !albumDraft.value) return;
-        if (result.imageUrl) {
-            if (albumDraft.value.image === initialImage) albumDraft.value.image = result.imageUrl;
+        const candidates = sections.flatMap((section) => section.status === 'ok' ? section.items : []);
+        coverCandidates.value = [...new Map([...coverCandidates.value, ...candidates]
+            .map((candidate) => [`${candidate.source}:${candidate.entityType}:${candidate.entityId}`, candidate])).values()];
+        const preferred = coverCandidates.value.find((candidate) => candidate.source === 'cover-art-archive')
+            ?? coverCandidates.value[0];
+        if (preferred) {
+            if (albumDraft.value.image === initialImage || !albumDraft.value.image) selectCover(preferred);
             coverStatus.value = 'found';
         } else {
             coverStatus.value = albumDraft.value.image ? 'found' : 'missing';
@@ -756,8 +908,26 @@ async function loadCover(releaseGroupMbid: string) {
 }
 
 function retryCover() {
-    const releaseGroupMbid = albumDraft.value?.musicbrainz_data?.id;
-    if (releaseGroupMbid) void loadCover(releaseGroupMbid);
+    if (albumDraft.value) void loadCover();
+}
+
+function selectCover(candidate: CatalogCoverCandidate) {
+    if (!albumDraft.value) return;
+    albumDraft.value.image = candidate.previewUrl;
+    albumDraft.value.image_reference = candidate.source === 'discogs'
+        ? { source: 'discogs', kind: candidate.entityType as 'master' | 'release', externalId: candidate.entityId,
+            externalUrl: candidate.externalUrl }
+        : candidate.source === 'fanart'
+            ? { source: 'fanart', kind: 'release-group', externalId: candidate.entityId,
+                externalUrl: candidate.externalUrl }
+            : { source: 'cover-art-archive' };
+    coverStatus.value = 'found';
+}
+
+function markManualCover(value: string) {
+    if (!albumDraft.value) return;
+    if (coverCandidates.value.some((candidate) => candidate.previewUrl === value)) return;
+    albumDraft.value.image_reference = { source: value?.includes('coverartarchive.org') ? 'cover-art-archive' : 'manual' };
 }
 
 function getReleaseGroupThumbnailUrl(releaseGroupMbid: string): string {
@@ -781,11 +951,12 @@ function resetAlbumFlow(clearMetadata: boolean) {
     albumDraft.value = null;
     albumSearch.value = '';
     albumSelectionKey.value = null;
-    albumSuggestions.value = [];
-    albumDefaultSuggestions.value = [];
+    albumSections.value = [];
+    albumDefaultSections.value = [];
     albumSearching.value = false;
     albumSearchError.value = '';
     coverStatus.value = 'idle';
+    coverCandidates.value = [];
     collectionForm.value.musicbrainz_release_data = null;
     if (clearMetadata) collectionForm.value.metadata = [];
 }
@@ -797,7 +968,7 @@ function resetCollectionForm() {
     artistDraft.value = null;
     artistSearch.value = '';
     artistSelectionKey.value = null;
-    artistSuggestions.value = [];
+    artistSections.value = [];
     artistSearching.value = false;
     artistSearchError.value = '';
     resetAlbumFlow(true);
@@ -830,6 +1001,7 @@ async function saveCollection() {
             data: {
                 name: artistDraft.value!.name.trim(),
                 musicbrainz_data: artistDraft.value!.musicbrainz_data,
+                external_references: artistDraft.value!.external_references,
             },
         };
     const album = selectedAlbumId.value !== null
@@ -841,6 +1013,9 @@ async function saveCollection() {
                 year: albumDraft.value!.year === '' ? null : albumDraft.value!.year,
                 image: albumDraft.value!.image.trim() || null,
                 musicbrainz_data: albumDraft.value!.musicbrainz_data,
+                external_references: albumDraft.value!.external_references,
+                image_source: albumDraft.value!.image_reference.source,
+                image_reference: albumDraft.value!.image_reference,
             },
         };
     saving.value = true;
@@ -853,6 +1028,12 @@ async function saveCollection() {
             metadata: collectionForm.value.metadata,
             musicbrainz_release_data: collectionForm.value.musicbrainz_release_data,
         });
+        if (artist.type === 'new') result.artist.external_references ??= artist.data.external_references;
+        if (album.type === 'new') {
+            result.album.external_references ??= album.data.external_references;
+            result.album.image_source ??= album.data.image_source;
+            result.album.image_reference ??= album.data.image_reference;
+        }
         if (!artists.value.some((item) => item.id === result.artist.id)) artists.value.push(result.artist);
         if (!albums.value.some((item) => item.id === result.album.id)) albums.value.push(result.album);
         if (!collection.value.some((item) => item.id === result.collection.id)) collection.value.push(result.collection);
@@ -871,6 +1052,18 @@ function openCollectionEdit(item: CollectionItem) {
     collectionEditMetadata.value = cloneMetadata(item.metadata);
     collectionEditRelease.value = item.musicbrainz_release_data;
     collectionEditReleaseGroup.value = item.album_musicbrainz_data;
+    collectionEditCatalogReference.value = item.album_external_references?.find((reference) => reference.source === 'discogs')
+        ?? item.album_external_references?.find((reference) => reference.source === 'musicbrainz') ?? null;
+    collectionEditForm.value = {
+        artistName: item.artist_name,
+        artistImage: item.artist_image ?? '',
+        albumName: item.album_name,
+        albumYear: item.album_year,
+        albumImage: item.album_image_source === 'discogs' ? '' : item.album_image ?? '',
+        albumImageSource: item.album_image_source ?? 'manual',
+        albumImageReference: item.album_image_reference ?? null,
+    };
+    collectionEditSaveError.value = '';
     showCollectionEdit.value = true;
 }
 
@@ -879,6 +1072,12 @@ function resetCollectionEdit() {
     collectionEditMetadata.value = [];
     collectionEditRelease.value = null;
     collectionEditReleaseGroup.value = null;
+    collectionEditCatalogReference.value = null;
+    collectionEditForm.value = {
+        artistName: '', artistImage: '', albumName: '', albumYear: null, albumImage: '',
+        albumImageSource: 'manual', albumImageReference: null,
+    };
+    collectionEditSaveError.value = '';
 }
 
 function cancelCollectionEdit() {
@@ -888,16 +1087,37 @@ function cancelCollectionEdit() {
 
 async function saveCollectionEdit() {
     const id = editingCollectionId.value;
-    if (id === null || !isMetadataValid(collectionEditMetadata.value)) return;
+    if (id === null || !collectionEditFormValid.value) return;
     saving.value = true;
+    collectionEditSaveError.value = '';
     try {
-        const updatedItem = await collectionStore.updateCollection(id, {
+        await collectionStore.updateCollection(id, {
+            artist: {
+                name: collectionEditForm.value.artistName.trim(),
+                image: collectionEditForm.value.artistImage.trim() || null,
+            },
+            album: {
+                name: collectionEditForm.value.albumName.trim(),
+                year: collectionEditForm.value.albumYear === '' ? null : collectionEditForm.value.albumYear,
+                image: collectionEditForm.value.albumImage.trim() || null,
+                image_source: collectionEditForm.value.albumImageSource === 'discogs'
+                    && !collectionEditForm.value.albumImage.startsWith('http') ? 'discogs'
+                    : collectionEditForm.value.albumImageSource === 'fanart' ? 'fanart'
+                    : collectionEditForm.value.albumImage.includes('coverartarchive.org') ? 'cover-art-archive' : 'manual',
+                image_reference: (collectionEditForm.value.albumImageSource === 'discogs'
+                    && !collectionEditForm.value.albumImage.startsWith('http')
+                    || collectionEditForm.value.albumImageSource === 'fanart')
+                    ? collectionEditForm.value.albumImageReference : null,
+            },
             metadata: collectionEditMetadata.value,
             musicbrainz_release_data: collectionEditRelease.value,
         });
-        const index = collection.value.findIndex((item) => item.id === id);
-        if (index !== -1) collection.value[index] = updatedItem;
+        await refreshDashboard();
         cancelCollectionEdit();
+    } catch (error) {
+        collectionEditSaveError.value = error instanceof Error
+            ? error.message
+            : t('dashboard.edit.saveError');
     } finally {
         saving.value = false;
     }
@@ -937,5 +1157,23 @@ onMounted(async () => {
     align-items: center;
     justify-content: center;
     background: rgba(255, 255, 255, 0.08);
+}
+.cover-candidate {
+    overflow: hidden;
+    width: 76px;
+    padding: 2px;
+    border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+    border-radius: 6px;
+    background: rgb(var(--v-theme-surface));
+    color: rgb(var(--v-theme-on-surface));
+    cursor: pointer;
+}
+.cover-candidate:hover,
+.cover-candidate:focus-visible { border-color: rgb(var(--v-theme-primary)); }
+.cover-candidate small { display: block; padding: 2px; }
+.cover-candidate a,
+.catalog-source-link {
+    color: rgb(var(--v-theme-primary));
+    font-size: .75rem;
 }
 </style>

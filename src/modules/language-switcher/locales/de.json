@@ -10,11 +10,31 @@
   },
   "navigation": {
     "home": "Startseite",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "about": "Über uns"
   },
   "footer": {
     "label": "Fußzeile",
     "links": "Projekt- und Kontaktlinks"
+  },
+  "about": {
+    "title": "Über uns",
+    "introduction": "Collection verwendet Daten und Bilder der folgenden Dienste:",
+    "project": {
+      "title": "Über das Projekt",
+      "descriptionBeforeAuthor": "Collection ist ein quelloffenes Projekt, das online von ",
+      "descriptionAfterAuthor": " bereitgestellt wird. Es wird nicht monetarisiert und wird es auch niemals werden. Der Quellcode ist direkt über das ",
+      "githubLink": "GitHub-Projekt",
+      "permissions": "Du darfst es selbst hosten, verwenden und verändern, aber in keiner Weise monetarisieren."
+    },
+    "sources": {
+      "musicbrainz": "Musikmetadaten bereitgestellt von MusicBrainz.",
+      "coverArtArchive": "Albumcover bereitgestellt vom Cover Art Archive.",
+      "discogs": "Musikdaten und Albumcover bereitgestellt von Discogs.",
+      "fanart": "Albumcover bereitgestellt von Fanart.tv.",
+      "lastfm": "Künstler- und Albumdaten bereitgestellt von Last.fm."
+    },
+    "discogsDisclaimer": "Diese Anwendung verwendet die Discogs-API, ist jedoch weder mit Discogs verbunden noch von Discogs gesponsert oder unterstützt."
   },
   "home": {
     "title": "Meine Sammlung",
@@ -149,16 +169,22 @@
     "fields": {
       "albumName": "Albumname",
       "artistName": "Künstlername",
+      "artistImage": "URL des Künstlerbildes",
+      "albumImage": "Cover-URL",
       "image": "Cover-URL",
       "year": "Jahr"
     },
+    "edit": {
+      "sharedFieldsHint": "Änderungen an Künstler und Album gelten auch für alle anderen Sammlungseinträge, die sie verwenden.",
+      "saveError": "Der Sammlungseintrag konnte nicht aktualisiert werden."
+    },
     "musicbrainz": {
-      "searchArtist": "MusicBrainz durchsuchen oder Künstler erstellen",
-      "searchAlbum": "MusicBrainz durchsuchen oder Album erstellen",
+      "searchArtist": "Musikkataloge durchsuchen oder Künstler erstellen",
+      "searchAlbum": "Musikkataloge durchsuchen oder Album erstellen",
       "existingArtist": "Vorhandener Künstler",
       "existingAlbum": "Vorhandenes Album",
       "musicBrainzResult": "MusicBrainz",
-      "searchHint": "Mindestens 2 Zeichen eingeben, um MusicBrainz zu durchsuchen",
+      "searchHint": "Mindestens 2 Zeichen eingeben, um konfigurierte Musikkataloge zu durchsuchen",
       "customArtistHint": "Dieser Künstler ist nicht mit MusicBrainz verknüpft; gib einen eigenen Albumnamen ein",
       "edition": "Veröffentlichung",
       "editionHint": "Optional — wähle ein häufiges Format oder eine bestimmte MusicBrainz-Veröffentlichung",
@@ -166,7 +192,7 @@
       "commonReleases": "Häufig",
       "musicBrainzReleases": "MusicBrainz",
       "create": "\"{query}\" erstellen",
-      "searchError": "Die MusicBrainz-Suche ist nicht verfügbar. Ein eigener Eintrag kann weiterhin erstellt werden.",
+      "searchError": "Dieser Katalog ist nicht verfügbar. Andere Quellen und manuelle Einträge bleiben verfügbar.",
       "coverMissing": "Kein Cover gefunden. Gib eine Bild-URL manuell ein.",
       "coverError": "Die Cover-Suche ist fehlgeschlagen. Versuche es erneut oder gib eine Bild-URL manuell ein.",
       "duplicateCollection": "Dieses Album ist bereits in deiner Sammlung.",

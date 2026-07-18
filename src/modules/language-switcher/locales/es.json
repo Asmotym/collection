@@ -10,11 +10,31 @@
   },
   "navigation": {
     "home": "Inicio",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "about": "Acerca de"
   },
   "footer": {
     "label": "Pie de página",
     "links": "Enlaces del proyecto y de contacto"
+  },
+  "about": {
+    "title": "Acerca de",
+    "introduction": "Collection utiliza datos e imágenes de los siguientes servicios:",
+    "project": {
+      "title": "Acerca del proyecto",
+      "descriptionBeforeAuthor": "Collection es un proyecto de código abierto alojado en línea por ",
+      "descriptionAfterAuthor": ". No está monetizado y nunca lo estará. Puedes acceder directamente a su código fuente mediante el ",
+      "githubLink": "proyecto de GitHub",
+      "permissions": "Puedes alojarlo tú mismo, utilizarlo y modificarlo, pero no puedes monetizarlo de ninguna manera."
+    },
+    "sources": {
+      "musicbrainz": "Metadatos musicales proporcionados por MusicBrainz.",
+      "coverArtArchive": "Carátulas de álbumes proporcionadas por Cover Art Archive.",
+      "discogs": "Datos musicales y carátulas de álbumes proporcionados por Discogs.",
+      "fanart": "Carátulas de álbumes proporcionadas por Fanart.tv.",
+      "lastfm": "Datos de artistas y álbumes proporcionados por Last.fm."
+    },
+    "discogsDisclaimer": "Esta aplicación utiliza la API de Discogs, pero no está afiliada, patrocinada ni respaldada por Discogs."
   },
   "home": {
     "title": "Mi colección",
@@ -149,16 +169,22 @@
     "fields": {
       "albumName": "Nombre del álbum",
       "artistName": "Nombre del artista",
+      "artistImage": "URL de la imagen del artista",
+      "albumImage": "URL de portada",
       "image": "URL de portada",
       "year": "Año"
     },
+    "edit": {
+      "sharedFieldsHint": "Los cambios del artista y del álbum también se aplican a las demás entradas de la colección que los usan.",
+      "saveError": "No se pudo actualizar la entrada de la colección."
+    },
     "musicbrainz": {
-      "searchArtist": "Buscar en MusicBrainz o crear un artista",
-      "searchAlbum": "Buscar en MusicBrainz o crear un álbum",
+      "searchArtist": "Buscar en catálogos musicales o crear un artista",
+      "searchAlbum": "Buscar en catálogos musicales o crear un álbum",
       "existingArtist": "Artista existente",
       "existingAlbum": "Álbum existente",
       "musicBrainzResult": "MusicBrainz",
-      "searchHint": "Escribe al menos 2 caracteres para buscar en MusicBrainz",
+      "searchHint": "Escribe al menos 2 caracteres para buscar en los catálogos configurados",
       "customArtistHint": "Este artista no está vinculado a MusicBrainz; introduce un álbum personalizado",
       "edition": "Lanzamiento",
       "editionHint": "Opcional — elige un formato común o un lanzamiento específico de MusicBrainz",
@@ -166,7 +192,7 @@
       "commonReleases": "Comunes",
       "musicBrainzReleases": "MusicBrainz",
       "create": "Crear \"{query}\"",
-      "searchError": "La búsqueda de MusicBrainz no está disponible. Aún puedes crear una entrada personalizada.",
+      "searchError": "Este catálogo no está disponible. Las demás fuentes y la creación manual siguen disponibles.",
       "coverMissing": "No se encontró ninguna portada. Introduce manualmente una URL de imagen.",
       "coverError": "La búsqueda de portada falló. Reinténtalo o introduce manualmente una URL de imagen.",
       "duplicateCollection": "Este álbum ya está en tu colección.",

@@ -10,11 +10,31 @@
   },
   "navigation": {
     "home": "Accueil",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "about": "À propos"
   },
   "footer": {
     "label": "Pied de page",
     "links": "Liens du projet et de contact"
+  },
+  "about": {
+    "title": "À propos",
+    "introduction": "Collection utilise les données et illustrations des services suivants :",
+    "project": {
+      "title": "À propos du projet",
+      "descriptionBeforeAuthor": "Collection est un projet open source hébergé en ligne par ",
+      "descriptionAfterAuthor": ". Il n’est pas monétisé et ne le sera jamais. Vous pouvez accéder directement à son code source via le ",
+      "githubLink": "projet GitHub",
+      "permissions": "Vous êtes autorisé à l’héberger vous-même, à l’utiliser et à le modifier, mais vous ne pouvez le monétiser d’aucune manière."
+    },
+    "sources": {
+      "musicbrainz": "Métadonnées musicales fournies par MusicBrainz.",
+      "coverArtArchive": "Pochettes d’albums fournies par Cover Art Archive.",
+      "discogs": "Données musicales et pochettes d’albums fournies par Discogs.",
+      "fanart": "Pochettes d’albums fournies par Fanart.tv.",
+      "lastfm": "Données sur les artistes et albums fournies par Last.fm."
+    },
+    "discogsDisclaimer": "Cette application utilise l’API de Discogs, mais n’est ni affiliée, ni sponsorisée, ni approuvée par Discogs."
   },
   "home": {
     "title": "Ma collection",
@@ -149,16 +169,22 @@
     "fields": {
       "albumName": "Nom de l'album",
       "artistName": "Nom de l'artiste",
+      "artistImage": "URL de l’image de l’artiste",
+      "albumImage": "URL de la pochette",
       "image": "URL de la pochette",
       "year": "Année"
     },
+    "edit": {
+      "sharedFieldsHint": "Les modifications de l’artiste et de l’album s’appliquent aussi à toutes les autres entrées qui les utilisent.",
+      "saveError": "L’entrée de collection n’a pas pu être mise à jour."
+    },
     "musicbrainz": {
-      "searchArtist": "Rechercher sur MusicBrainz ou créer un artiste",
-      "searchAlbum": "Rechercher sur MusicBrainz ou créer un album",
+      "searchArtist": "Rechercher dans les catalogues musicaux ou créer un artiste",
+      "searchAlbum": "Rechercher dans les catalogues musicaux ou créer un album",
       "existingArtist": "Artiste existant",
       "existingAlbum": "Album existant",
       "musicBrainzResult": "MusicBrainz",
-      "searchHint": "Saisissez au moins 2 caractères pour rechercher sur MusicBrainz",
+      "searchHint": "Saisissez au moins 2 caractères pour rechercher dans les catalogues configurés",
       "customArtistHint": "Cet artiste n’est pas lié à MusicBrainz ; saisissez un nom d’album personnalisé",
       "edition": "Parution",
       "editionHint": "Facultatif — choisissez un format courant ou une parution MusicBrainz précise",
@@ -166,7 +192,7 @@
       "commonReleases": "Courants",
       "musicBrainzReleases": "MusicBrainz",
       "create": "Créer \"{query}\"",
-      "searchError": "La recherche MusicBrainz est indisponible. Vous pouvez toujours créer une entrée personnalisée.",
+      "searchError": "Ce catalogue est indisponible. Les autres sources et la création manuelle restent disponibles.",
       "coverMissing": "Aucune pochette trouvée. Saisissez manuellement une URL d’image.",
       "coverError": "La recherche de pochette a échoué. Réessayez ou saisissez manuellement une URL d’image.",
       "duplicateCollection": "Cet album est déjà dans votre collection.",

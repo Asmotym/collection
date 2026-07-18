@@ -39,6 +39,11 @@ export function buildReleaseGroupSearchQuery(artistMbid: string, query: string):
     return `arid:${artistMbid} AND primarytype:album AND releasegroup:"${escapeLuceneValue(query.trim())}"`;
 }
 
+export function buildReleaseGroupArtistNameQuery(artistName: string, query: string): string {
+    const album = query.trim() ? ` AND releasegroup:"${escapeLuceneValue(query.trim())}"` : '';
+    return `artist:"${escapeLuceneValue(artistName.trim())}" AND primarytype:album${album}`;
+}
+
 export function isMusicBrainzArtist(value: unknown): value is MusicBrainzArtist {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
     const artist = value as Record<string, unknown>;
@@ -111,6 +116,26 @@ export class MusicBrainzClient {
         return (response.artists ?? []).filter(isMusicBrainzArtist);
     }
 
+    async lookupArtist(mbid: string): Promise<MusicBrainzArtist | null> {
+        try {
+            const artist = await this.requestMusicBrainz<unknown>(`${MUSICBRAINZ_BASE_URL}/artist/${mbid}?fmt=json`);
+            return isMusicBrainzArtist(artist) ? artist : null;
+        } catch (error) {
+            if (error instanceof UpstreamServiceError && error.message.includes('HTTP 404')) return null;
+            throw error;
+        }
+    }
+
+    async lookupReleaseGroup(mbid: string): Promise<MusicBrainzReleaseGroup | null> {
+        try {
+            const releaseGroup = await this.requestMusicBrainz<unknown>(`${MUSICBRAINZ_BASE_URL}/release-group/${mbid}?fmt=json`);
+            return isMusicBrainzReleaseGroup(releaseGroup) ? releaseGroup : null;
+        } catch (error) {
+            if (error instanceof UpstreamServiceError && error.message.includes('HTTP 404')) return null;
+            throw error;
+        }
+    }
+
     async searchReleaseGroups(artistMbid: string, query: string): Promise<MusicBrainzReleaseGroup[]> {
         const params = new URLSearchParams({
             query: buildReleaseGroupSearchQuery(artistMbid, query),
@@ -137,6 +162,18 @@ export class MusicBrainzClient {
         return (response['release-groups'] ?? [])
             .filter(isMusicBrainzReleaseGroup)
             .sort((left, right) => left.title.localeCompare(right.title));
+    }
+
+    async searchReleaseGroupsByArtistName(artistName: string, query = ''): Promise<MusicBrainzReleaseGroup[]> {
+        const params = new URLSearchParams({
+            query: buildReleaseGroupArtistNameQuery(artistName, query),
+            fmt: 'json',
+            limit: query.trim() ? '12' : '100',
+        });
+        const response = await this.requestMusicBrainz<{ 'release-groups'?: unknown[] }>(
+            `${MUSICBRAINZ_BASE_URL}/release-group?${params}`,
+        );
+        return (response['release-groups'] ?? []).filter(isMusicBrainzReleaseGroup);
     }
 
     async browseReleases(releaseGroupMbid: string): Promise<MusicBrainzRelease[]> {

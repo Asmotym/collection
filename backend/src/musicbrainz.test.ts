@@ -4,6 +4,7 @@ import { isPostgresUniqueViolation } from './database-errors.js';
 import {
     buildArtistSearchQuery,
     buildReleaseGroupSearchQuery,
+    buildReleaseGroupArtistNameQuery,
     isMusicBrainzArtist,
     isMusicBrainzRelease,
     isMusicBrainzReleaseGroup,
@@ -20,6 +21,10 @@ test('builds escaped, constrained MusicBrainz queries', () => {
     assert.equal(
         buildReleaseGroupSearchQuery('410c9baf-5469-44f6-9852-826524b80c61', 'Album (Deluxe)'),
         'arid:410c9baf-5469-44f6-9852-826524b80c61 AND primarytype:album AND releasegroup:"Album \\(Deluxe\\)"',
+    );
+    assert.equal(
+        buildReleaseGroupArtistNameQuery('AC/DC', 'Album'),
+        'artist:"AC\\/DC" AND primarytype:album AND releasegroup:"Album"',
     );
 });
 

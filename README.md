@@ -24,6 +24,12 @@ POSTGRES_USER=collection
 POSTGRES_PASSWORD=collection
 DATABASE_URL=postgres://collection:collection@postgres:5432/collection
 MUSICBRAINZ_USER_AGENT=Collection/0.1.0 (your-email@example.com)
+CATALOG_DISCOGS_ENABLED=false
+DISCOGS_TOKEN=
+CATALOG_FANART_ENABLED=false
+FANART_API_KEY=
+CATALOG_LASTFM_ENABLED=false
+LASTFM_API_KEY=
 VITE_API_BASE_URL=
 VITE_DISCORD_CLIENT_ID=
 VITE_DISCORD_REDIRECT_URI=
@@ -32,6 +38,8 @@ VITE_DISCORD_REDIRECT_URI=
 Set `VITE_DISCORD_CLIENT_ID` and `VITE_DISCORD_REDIRECT_URI` when testing Discord login. For the Docker frontend, the default app URL is `http://localhost:8080`.
 
 `MUSICBRAINZ_USER_AGENT` defaults to this repository's contact URL. Override it with an application name, version, and real contact URL or email for your deployment; MusicBrainz requires this identification for API requests.
+
+Discogs, Fanart.tv, and Last.fm are optional providers. Set the matching `CATALOG_*_ENABLED` flag to `true` and provide the server-side credential to enable one. Credentials are never sent to the browser. Cover lookup tries Cover Art Archive, then Discogs, then Fanart.tv; Fanart.tv requires a MusicBrainz release-group ID. Before enabling Last.fm, confirm that the deployment is non-commercial and complies with its API approval and attribution requirements. Last.fm artwork is intentionally not used. Discogs images are resolved through the backend and cached for less than six hours.
 
 `VITE_API_BASE_URL` is optional. When set, it can be either the backend origin, such as `http://localhost:3000`, or the full API base, such as `http://localhost:3000/api`.
 

@@ -11,6 +11,9 @@
             <v-btn variant="text" :to="{ name: HomeRoutes.Dashboard }">
                 <span>{{ t('navigation.dashboard') }}</span>
             </v-btn>
+            <v-btn variant="text" :to="{ name: HomeRoutes.About }">
+                <span>{{ t('navigation.about') }}</span>
+            </v-btn>
         </v-container>
 
         <template v-slot:append>    

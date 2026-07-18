@@ -1,6 +1,5 @@
 <template>
-    <v-footer class="app-footer" :aria-label="t('footer.label')">
-        <span class="text-body-2 text-medium-emphasis">{{ t('common.title') }}</span>
+    <v-footer app class="app-footer" :aria-label="t('footer.label')">
         <nav class="app-footer__links" :aria-label="t('footer.links')">
             <a
                 href="https://github.com/Asmotym/collection"
@@ -28,7 +27,7 @@ const { t } = useI18n();
 .app-footer {
     flex: 0 0 auto;
     min-height: 48px;
-    justify-content: space-between;
+    justify-content: center;
     gap: 12px;
     padding-block: 8px;
     padding-inline: clamp(16px, 4vw, 48px);
@@ -39,7 +38,7 @@ const { t } = useI18n();
 .app-footer__links {
     display: flex;
     flex-wrap: wrap;
-    justify-content: flex-end;
+    justify-content: center;
     gap: 8px 20px;
 }
 

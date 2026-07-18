@@ -13,11 +13,14 @@
             {{ item.album_name }} <span class="text-body-secondary">({{ item.album_year ?? '-' }})</span>
         </v-card-title>
         <v-card-subtitle>{{ item.artist_name }}</v-card-subtitle>
-        <div v-if="item.album_image" class="mt-3 px-4">
-            <v-img :src="item.album_image" :alt="item.album_name" aspect-ratio="1" cover class="collection-card-image">
+        <div class="collection-card-image-wrap mt-3 mx-4">
+            <v-img v-if="item.album_image" :src="item.album_image" :alt="item.album_name" cover class="collection-card-image">
                 <template #placeholder><v-skeleton-loader type="image" /></template>
                 <template #error><div class="image-placeholder"><v-icon size="48">mdi-image-broken-variant</v-icon></div></template>
             </v-img>
+            <div v-else class="collection-card-image image-placeholder" aria-hidden="true">
+                <v-icon size="56">mdi-album</v-icon>
+            </div>
         </div>
         <v-card-text v-if="notes.length"><CollectionMetadataDisplay :metadata="notes" /></v-card-text>
         <v-card-actions v-if="links.length" class="mt-auto flex-wrap" @click.stop @keydown.stop>
@@ -53,6 +56,17 @@ const links = computed(() => urlMetadata(props.item.metadata, true));
 .collection-card { cursor: pointer; }
 .collection-card--no-actions { padding-bottom: 16px; }
 .collection-card:focus-visible { outline: 2px solid rgb(var(--v-theme-primary)); outline-offset: 2px; }
-.collection-card-image { overflow: hidden; border-radius: 4px; }
-.image-placeholder { display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; background: rgb(var(--v-theme-surface-variant)); }
+.collection-card-image-wrap { aspect-ratio: 1; }
+.collection-card-image { width: 100%; height: 100%; overflow: hidden; border-radius: 4px; }
+.image-placeholder {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    color: rgba(var(--v-theme-on-surface), .45);
+    background:
+        radial-gradient(circle at center, rgba(var(--v-theme-on-surface), .08), transparent 42%),
+        rgb(var(--v-theme-surface-variant));
+}
 </style>

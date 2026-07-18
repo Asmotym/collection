@@ -1,5 +1,5 @@
 <template>
-    <section v-if="artist || album || release" class="musicbrainz-details mb-6">
+    <section v-if="artist || album || commonRelease || musicBrainzRelease" class="musicbrainz-details mb-6">
         <h2 class="text-h6 mb-3">{{ t('musicbrainzDetails.title') }}</h2>
         <v-row>
             <v-col v-if="album || release" cols="12" md="6">
@@ -90,7 +90,8 @@ const commonRelease = computed<CommonReleaseSelection | null>(() => (
     props.release && isCommonRelease(props.release) ? props.release : null
 ));
 const musicBrainzRelease = computed<MusicBrainzRelease | null>(() => (
-    props.release && !isCommonRelease(props.release) ? props.release as MusicBrainzRelease : null
+    props.release && !isCommonRelease(props.release) && props.release.source !== 'discogs'
+        ? props.release as MusicBrainzRelease : null
 ));
 
 function isCommonRelease(release: CollectionReleaseSelection): release is CommonReleaseSelection {

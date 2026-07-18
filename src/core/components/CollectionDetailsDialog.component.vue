@@ -14,6 +14,20 @@
             </v-card-item>
             <v-card-text>
                 <MusicBrainzDetails :artist="item.artist_musicbrainz_data" :album="item.album_musicbrainz_data" :release="item.musicbrainz_release_data" />
+                <div v-if="providerLinks.length" class="d-flex flex-wrap ga-2 mb-5">
+                    <v-btn
+                        v-for="reference in providerLinks"
+                        :key="`${reference.source}:${reference.kind}:${reference.externalId}`"
+                        :href="reference.externalUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        variant="tonal"
+                        size="small"
+                        prepend-icon="mdi-open-in-new"
+                    >
+                        {{ reference.source === 'discogs' ? 'Data provided by Discogs' : reference.source === 'lastfm' ? 'Open on Last.fm' : 'Open on MusicBrainz' }}
+                    </v-btn>
+                </div>
                 <h2 class="text-h6 mb-2">{{ t('metadata.title') }}</h2>
                 <v-row>
                     <v-col cols="12" sm="6">
@@ -48,6 +62,7 @@ const emit = defineEmits<{ 'update:modelValue': [value: boolean]; closed: [] }>(
 const { t } = useI18n();
 const notes = computed(() => textMetadata(props.item?.metadata ?? []));
 const links = computed(() => urlMetadata(props.item?.metadata ?? []));
+const providerLinks = computed(() => props.item?.album_external_references ?? []);
 </script>
 
 <style scoped>

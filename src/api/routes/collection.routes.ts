@@ -16,6 +16,41 @@ import type {
     UpdateArtistPayload,
     UpdateCollectionPayload,
 } from "../../../shared/types/database.types";
+import type {
+    CatalogAlbumSearchParams,
+    CatalogAlbumResult,
+    CatalogArtistResult,
+    CatalogCoverCandidate,
+    CatalogCoverSearchPayload,
+    CatalogEditionResult,
+    CatalogProviderSection,
+    CatalogSource,
+} from "../../../shared/types/catalog.types";
+
+export async function searchCatalogArtists(query: string) {
+    const params = new URLSearchParams({ query });
+    return await ApiClient.request<CatalogProviderSection<CatalogArtistResult>[]>(`/catalog/artists?${params}`);
+}
+
+export async function searchCatalogAlbums(search: CatalogAlbumSearchParams) {
+    const params = new URLSearchParams({ artistName: search.artistName, query: search.query });
+    if (search.musicbrainzId) params.set('musicbrainzId', search.musicbrainzId);
+    if (search.discogsId) params.set('discogsId', search.discogsId);
+    if (search.lastfmId) params.set('lastfmId', search.lastfmId);
+    return await ApiClient.request<CatalogProviderSection<CatalogAlbumResult>[]>(`/catalog/albums?${params}`);
+}
+
+export async function getCatalogEditions(source: CatalogSource, kind: string, id: string) {
+    return await ApiClient.request<CatalogEditionResult[]>(
+        `/catalog/albums/${encodeURIComponent(source)}/${encodeURIComponent(kind)}/${encodeURIComponent(id)}/editions`,
+    );
+}
+
+export async function searchCatalogCovers(payload: CatalogCoverSearchPayload) {
+    return await ApiClient.request<CatalogProviderSection<CatalogCoverCandidate>[]>('/catalog/covers', {
+        method: 'POST', body: JSON.stringify(payload),
+    });
+}
 
 export async function searchMusicBrainzArtists(query: string) {
     const params = new URLSearchParams({ query });

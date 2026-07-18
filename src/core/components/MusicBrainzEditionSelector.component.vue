@@ -38,11 +38,13 @@ import type {
     MusicBrainzRelease,
     MusicBrainzReleaseGroup,
 } from '../../../shared/types/database.types';
+import type { CatalogEditionResult, CatalogExternalReference } from '../../../shared/types/catalog.types';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{
     releaseGroup: MusicBrainzReleaseGroup | null;
+    catalogReference?: CatalogExternalReference | null;
     modelValue: CollectionReleaseSelection | null;
 }>();
 
@@ -53,13 +55,13 @@ const emit = defineEmits<{
 interface ReleaseSelectItem {
     id: string;
     title: string;
-    kind: 'header' | 'divider' | 'common' | 'musicbrainz';
+    kind: 'header' | 'divider' | 'common' | 'catalog';
     data: CollectionReleaseSelection | null;
     props: { disabled?: boolean; subtitle?: string; prependIcon?: string };
 }
 
 const { t } = useI18n();
-const musicBrainzReleases = ref<MusicBrainzRelease[]>([]);
+const catalogEditions = ref<Array<{ edition: CatalogEditionResult; selection: CollectionReleaseSelection }>>([]);
 const selectedId = ref<string | null>(props.modelValue?.id ?? null);
 const loading = ref(false);
 const loadError = ref(false);
@@ -93,28 +95,35 @@ const releaseItems = computed<ReleaseSelectItem[]>(() => {
         })),
     ];
 
-    if (!props.releaseGroup) return commonItems;
+    if (!effectiveReference.value || effectiveReference.value.source === 'lastfm') return commonItems;
+    const source = effectiveReference.value.source;
     return [
         ...commonItems,
-        { id: 'divider:musicbrainz', title: '', kind: 'divider', data: null, props: { disabled: true } },
+        { id: `divider:${source}`, title: '', kind: 'divider', data: null, props: { disabled: true } },
         {
-            id: 'header:musicbrainz',
-            title: t('dashboard.musicbrainz.musicBrainzReleases'),
+            id: `header:${source}`,
+            title: source === 'discogs' ? 'Discogs' : t('dashboard.musicbrainz.musicBrainzReleases'),
             kind: 'header',
             data: null,
             props: { disabled: true },
         },
-        ...musicBrainzReleases.value.map((release) => ({
-            id: release.id,
-            title: formatReleaseTitle(release),
-            kind: 'musicbrainz' as const,
-            data: release,
-            props: { prependIcon: 'mdi-database-music' },
+        ...catalogEditions.value.map(({ edition, selection }) => ({
+            id: edition.id,
+            title: formatCatalogEdition(edition),
+            kind: 'catalog' as const,
+            data: selection,
+            props: { prependIcon: source === 'discogs' ? 'mdi-record-circle-outline' : 'mdi-database-music' },
         })),
     ];
 });
 
-watch(() => props.releaseGroup?.id, () => void loadReleases(), { immediate: true });
+const effectiveReference = computed<CatalogExternalReference | null>(() => props.catalogReference ?? (props.releaseGroup ? {
+    source: 'musicbrainz', kind: 'release-group', externalId: props.releaseGroup.id,
+    externalUrl: `https://musicbrainz.org/release-group/${props.releaseGroup.id}`,
+} : null));
+
+watch(() => `${effectiveReference.value?.source}:${effectiveReference.value?.kind}:${effectiveReference.value?.externalId}`,
+    () => void loadReleases(), { immediate: true });
 watch(() => props.modelValue?.id, (value) => { selectedId.value = value ?? null; });
 
 function commonReleaseIcon(format: string): string {
@@ -124,36 +133,38 @@ function commonReleaseIcon(format: string): string {
     return 'mdi-disc';
 }
 
-function formatReleaseTitle(release: MusicBrainzRelease): string {
-    const formats = [...new Set((release.media ?? []).map((medium) => medium.format).filter(Boolean))].join(', ');
-    const labelInfo = release['label-info']?.[0];
-    const label = [labelInfo?.label?.name, labelInfo?.['catalog-number']].filter(Boolean).join(' · ');
-    return [release.date, release.country, formats, label, release.barcode, release.disambiguation]
-        .filter(Boolean).join(' · ') || release.title;
+function formatCatalogEdition(edition: CatalogEditionResult): string {
+    return [edition.date ?? edition.year, edition.country, edition.formats?.join(', '),
+        edition.labels?.join(', '), edition.catalogNumber, edition.barcode].filter(Boolean).join(' · ') || edition.title;
 }
 
 async function loadReleases() {
     const currentRequestId = ++requestId;
-    musicBrainzReleases.value = [];
+    catalogEditions.value = [];
     loadError.value = false;
     const currentSelection = props.modelValue;
     const commonSelection = currentSelection?.id.startsWith('common:') ? currentSelection : null;
     selectedId.value = currentSelection?.id ?? null;
-    const releaseGroupId = props.releaseGroup?.id;
-    if (!releaseGroupId) {
+    const reference = effectiveReference.value;
+    if (!reference || reference.source === 'lastfm') {
         emit('update:modelValue', commonSelection);
         return;
     }
 
     loading.value = true;
     try {
-        const results = await api.collection.getMusicBrainzReleases(releaseGroupId);
+        const results = await api.collection.getCatalogEditions(reference.source, reference.kind, reference.externalId);
         if (currentRequestId !== requestId) return;
-        musicBrainzReleases.value = results;
-        const musicBrainzSelection = currentSelection && !currentSelection.id.startsWith('common:')
-            ? results.find((release) => release.id === currentSelection.id) ?? null
+        catalogEditions.value = results.map((edition) => ({
+            edition,
+            selection: edition.source === 'discogs'
+                ? { source: 'discogs', kind: 'release', id: edition.id, externalUrl: edition.externalUrl }
+                : { ...(edition.rawMusicBrainz as MusicBrainzRelease), source: 'musicbrainz' },
+        }));
+        const catalogSelection = currentSelection && !currentSelection.id.startsWith('common:')
+            ? catalogEditions.value.find(({ selection }) => selection.id === currentSelection.id)?.selection ?? null
             : null;
-        const selection = commonSelection ?? musicBrainzSelection;
+        const selection = commonSelection ?? catalogSelection;
         selectedId.value = selection?.id ?? null;
         emit('update:modelValue', selection);
     } catch {
@@ -165,7 +176,7 @@ async function loadReleases() {
 
 function selectRelease(releaseId: string | null) {
     const selection = commonReleases.find((release) => release.id === releaseId)
-        ?? musicBrainzReleases.value.find((release) => release.id === releaseId)
+        ?? catalogEditions.value.find(({ selection }) => selection.id === releaseId)?.selection
         ?? null;
     emit('update:modelValue', selection);
 }

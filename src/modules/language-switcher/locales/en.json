@@ -10,11 +10,31 @@
   },
   "navigation": {
     "home": "Home",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "about": "About"
   },
   "footer": {
     "label": "Site footer",
     "links": "Project and contact links"
+  },
+  "about": {
+    "title": "About",
+    "introduction": "Collection uses data and artwork from the following services:",
+    "project": {
+      "title": "About the project",
+      "descriptionBeforeAuthor": "Collection is an open-source project hosted online by ",
+      "descriptionAfterAuthor": ". It is not monetized and never will be. You can access its source code through the ",
+      "githubLink": "GitHub project",
+      "permissions": "You may host it yourself, use it, and modify it, but you may not monetize it in any way."
+    },
+    "sources": {
+      "musicbrainz": "Music metadata provided by MusicBrainz.",
+      "coverArtArchive": "Album artwork provided by the Cover Art Archive.",
+      "discogs": "Music data and album artwork provided by Discogs.",
+      "fanart": "Album artwork provided by Fanart.tv.",
+      "lastfm": "Artist and album data provided by Last.fm."
+    },
+    "discogsDisclaimer": "This application uses Discogs’ API but is not affiliated with, sponsored or endorsed by Discogs."
   },
   "home": {
     "title": "My Collection",
@@ -149,24 +169,30 @@
     "fields": {
       "albumName": "Album name",
       "artistName": "Artist name",
+      "artistImage": "Artist image URL",
+      "albumImage": "Cover URL",
       "image": "Cover URL",
       "year": "Year"
     },
+    "edit": {
+      "sharedFieldsHint": "Artist and album changes also apply to every other collection entry that uses them.",
+      "saveError": "The collection entry could not be updated."
+    },
     "musicbrainz": {
-      "searchArtist": "Search MusicBrainz or create an artist",
-      "searchAlbum": "Search MusicBrainz or create an album",
+      "searchArtist": "Search music catalogs or create an artist",
+      "searchAlbum": "Search music catalogs or create an album",
       "existingArtist": "Existing artist",
       "existingAlbum": "Existing album",
       "musicBrainzResult": "MusicBrainz",
-      "searchHint": "Type at least 2 characters to search MusicBrainz",
+      "searchHint": "Type at least 2 characters to search configured music catalogs",
       "customArtistHint": "This artist is not linked to MusicBrainz; enter a custom album name",
       "edition": "Release",
-      "editionHint": "Optional — choose a common format or a specific MusicBrainz release",
+      "editionHint": "Optional — choose a common format or a specific catalog release",
       "editionError": "Album releases could not be loaded.",
       "commonReleases": "Common",
       "musicBrainzReleases": "MusicBrainz",
       "create": "Create \"{query}\"",
-      "searchError": "MusicBrainz search is unavailable. You can still create a custom entry.",
+      "searchError": "Catalog search is unavailable. You can still create a custom entry.",
       "coverMissing": "No cover was found. Enter an image URL manually.",
       "coverError": "The cover lookup failed. You can retry or enter an image URL manually.",
       "duplicateCollection": "This album is already in your collection.",

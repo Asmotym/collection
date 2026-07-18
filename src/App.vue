@@ -1,7 +1,7 @@
 <template>
-  <v-responsive>
-    <v-app>
-      <v-main class="app">
+  <v-responsive class="app-viewport">
+    <v-app class="app-shell">
+      <v-main class="app-content">
         <router-view></router-view>
       </v-main>
       <AppFooter />
@@ -27,3 +27,25 @@ watchEffect(() => {
   document.querySelector('meta[property="og:description"]')?.setAttribute('content', description);
 });
 </script>
+
+<style>
+html,
+body,
+#app {
+  height: 100%;
+  overflow: hidden;
+}
+
+.app-viewport,
+.app-shell {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.app-content {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+</style>

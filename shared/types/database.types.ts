@@ -1,3 +1,10 @@
+import type {
+    CatalogCoverReference,
+    CatalogExternalReference,
+    DiscogsReleaseSelection,
+    MusicBrainzReleaseSelection,
+} from './catalog.types.js';
+
 export type UserRights = 'user' | 'admin';
 
 export interface MusicBrainzArea {
@@ -77,7 +84,8 @@ export interface CommonReleaseSelection {
     format: string;
 }
 
-export type CollectionReleaseSelection = MusicBrainzRelease | CommonReleaseSelection;
+export type CollectionReleaseSelection = MusicBrainzRelease | MusicBrainzReleaseSelection
+    | DiscogsReleaseSelection | CommonReleaseSelection;
 
 export interface CoverArtResult {
     imageUrl: string | null;
@@ -88,6 +96,7 @@ export interface DatabaseArtist {
     name: string;
     image: string | null;
     musicbrainz_data: MusicBrainzArtist | null;
+    external_references?: CatalogExternalReference[];
 }
 
 export interface CollectionUrlMetadata {
@@ -114,6 +123,9 @@ export interface DatabaseAlbum {
     year: number | null;
     image: string | null;
     musicbrainz_data: MusicBrainzReleaseGroup | null;
+    external_references?: CatalogExternalReference[];
+    image_source?: 'manual' | 'cover-art-archive' | 'discogs' | 'fanart';
+    image_reference?: CatalogCoverReference | null;
 }
 
 export interface DatabaseCollection {
@@ -143,19 +155,26 @@ export interface DatabaseCollectionItem {
     album_year: number | null;
     artist_id: number;
     artist_name: string;
+    artist_image: string | null;
     artist_musicbrainz_data: MusicBrainzArtist | null;
     album_musicbrainz_data: MusicBrainzReleaseGroup | null;
     musicbrainz_release_data: CollectionReleaseSelection | null;
     created_by_user_id: string | null;
     created_by_username: string | null;
     metadata: CollectionMetadata[];
+    artist_external_references?: CatalogExternalReference[];
+    album_external_references?: CatalogExternalReference[];
+    album_image_source?: 'manual' | 'cover-art-archive' | 'discogs' | 'fanart';
+    album_image_reference?: CatalogCoverReference | null;
 }
 
 export type CreateArtistPayload = Pick<DatabaseArtist, 'name'>
-    & Partial<Pick<DatabaseArtist, 'image' | 'musicbrainz_data'>>;
-export type CreateAlbumPayload = Pick<DatabaseAlbum, 'artist_id' | 'name' | 'year' | 'image' | 'musicbrainz_data'>;
+    & Partial<Pick<DatabaseArtist, 'image' | 'musicbrainz_data' | 'external_references'>>;
+export type CreateAlbumPayload = Pick<DatabaseAlbum, 'artist_id' | 'name' | 'year' | 'image' | 'musicbrainz_data'>
+    & Partial<Pick<DatabaseAlbum, 'external_references' | 'image_source' | 'image_reference'>>;
 export type UpdateArtistPayload = Pick<DatabaseArtist, 'name' | 'image'>;
-export type UpdateAlbumPayload = Pick<DatabaseAlbum, 'artist_id' | 'name' | 'year' | 'image'>;
+export type UpdateAlbumPayload = Pick<DatabaseAlbum, 'artist_id' | 'name' | 'year' | 'image'>
+    & Partial<Pick<DatabaseAlbum, 'image_source' | 'image_reference'>>;
 export type CreateCollectionPayload = Pick<DatabaseCollection, 'artist_id' | 'album_id' | 'created_by_user_id'>
     & Partial<Pick<DatabaseCollection, 'metadata' | 'musicbrainz_release_data'>>;
 export type ComposedArtistSelection =
@@ -176,4 +195,8 @@ export interface ComposeCollectionResult {
     album: DatabaseAlbum;
     collection: DatabaseCollectionItem;
 }
-export type UpdateCollectionPayload = Pick<DatabaseCollection, 'metadata' | 'musicbrainz_release_data'>;
+export interface UpdateCollectionPayload extends Pick<DatabaseCollection, 'metadata' | 'musicbrainz_release_data'> {
+    artist: Pick<DatabaseArtist, 'name' | 'image'>;
+    album: Pick<DatabaseAlbum, 'name' | 'year' | 'image'>
+        & Partial<Pick<DatabaseAlbum, 'image_source' | 'image_reference'>>;
+}

@@ -87,6 +87,7 @@ export const useCollectionStore = defineStore('collection', {
             for (const item of this.collection) {
                 if (item.artist_id === id) {
                     item.artist_name = artist.name;
+                    item.artist_image = artist.image;
                     item.artist_musicbrainz_data = artist.musicbrainz_data;
                 }
             }
