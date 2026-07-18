@@ -116,58 +116,48 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "tabs": {
-      "artists": "Artistes",
-      "albums": "Albums",
-      "collection": "Collection"
+    "steps": {
+      "artist": "Artiste",
+      "album": "Album",
+      "informations": "Informations",
+      "selectArtist": "Sélectionnez d’abord un artiste dans l’étape Artiste.",
+      "selectAlbum": "Sélectionnez d’abord un album dans l’étape Album."
     },
     "columns": {
       "album": "Album",
-      "albums": "Albums",
       "actions": "Actions",
       "artist": "Artiste",
       "createdBy": "Créé par",
       "details": "Détails",
       "image": "Image",
-      "name": "Nom",
       "release": "Parution",
       "year": "Année"
     },
     "actions": {
-      "addAlbum": "Ajouter un album",
-      "addArtist": "Ajouter un artiste",
       "addCollection": "Ajouter une ligne",
       "add": "Ajouter",
       "cancel": "Annuler",
-      "editArtist": "Modifier l’artiste",
-      "editAlbum": "Modifier l’album",
-      "deleteArtist": "Supprimer l’artiste",
-      "deleteAlbum": "Supprimer l’album",
-      "delete": "Supprimer",
       "editCollection": "Modifier les informations de collection",
       "removeCollection": "Supprimer l'élément de collection",
       "save": "Enregistrer",
       "retry": "Réessayer"
     },
     "modals": {
-      "addArtist": "Ajouter un artiste",
-      "addAlbum": "Ajouter un album",
       "addCollection": "Ajouter une ligne de collection",
-      "editArtist": "Modifier l’artiste",
-      "editAlbum": "Modifier l’album",
       "editCollection": "Modifier les informations de collection"
     },
     "fields": {
-      "album": "Album",
       "albumName": "Nom de l'album",
-      "artist": "Artiste",
       "artistName": "Nom de l'artiste",
-      "image": "URL de l'image",
+      "image": "URL de la pochette",
       "year": "Année"
     },
     "musicbrainz": {
       "searchArtist": "Rechercher sur MusicBrainz ou créer un artiste",
       "searchAlbum": "Rechercher sur MusicBrainz ou créer un album",
+      "existingArtist": "Artiste existant",
+      "existingAlbum": "Album existant",
+      "musicBrainzResult": "MusicBrainz",
       "searchHint": "Saisissez au moins 2 caractères pour rechercher sur MusicBrainz",
       "customArtistHint": "Cet artiste n’est pas lié à MusicBrainz ; saisissez un nom d’album personnalisé",
       "edition": "Parution",
@@ -179,21 +169,8 @@
       "searchError": "La recherche MusicBrainz est indisponible. Vous pouvez toujours créer une entrée personnalisée.",
       "coverMissing": "Aucune pochette trouvée. Saisissez manuellement une URL d’image.",
       "coverError": "La recherche de pochette a échoué. Réessayez ou saisissez manuellement une URL d’image.",
-      "duplicateArtist": "Cet artiste MusicBrainz a déjà été ajouté.",
-      "duplicateAlbum": "Cet album MusicBrainz a déjà été ajouté.",
-      "saveError": "L’entrée n’a pas pu être enregistrée. Veuillez réessayer."
-    },
-    "delete": {
-      "artistTitle": "Supprimer {name}",
-      "albumTitle": "Supprimer {name}",
-      "simplePrompt": "Voulez-vous vraiment supprimer « {name} » ?",
-      "artistWarning": "La suppression de cet artiste supprimera aussi définitivement les albums et éléments de collection listés ci-dessous.",
-      "albumWarning": "La suppression de cet album supprimera aussi définitivement les éléments de collection listés ci-dessous.",
-      "affectedAlbums": "Albums ({count})",
-      "affectedCollection": "Éléments de collection ({count})",
-      "unknownYear": "Année inconnue",
-      "unknownUser": "Utilisateur inconnu",
-      "error": "L’élément n’a pas pu être supprimé. Veuillez réessayer."
+      "duplicateCollection": "Cet album est déjà dans votre collection.",
+      "composeSaveError": "L’entrée de collection n’a pas pu être enregistrée. Rien n’a été ajouté ; veuillez réessayer."
     }
   }
 }

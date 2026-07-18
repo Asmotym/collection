@@ -3,6 +3,8 @@ import type { CollectionItem } from "core/store/stores/collection.store";
 import type {
     CreateAlbumPayload,
     CreateArtistPayload,
+    ComposeCollectionPayload,
+    ComposeCollectionResult,
     CreateCollectionPayload,
     CoverArtResult,
     DatabaseAlbum,
@@ -103,6 +105,13 @@ export async function deleteAlbum(id: number) {
 
 export async function createCollection(payload: CreateCollectionPayload) {
     return await ApiClient.request<CollectionItem>('/collection', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+}
+
+export async function composeCollection(payload: ComposeCollectionPayload) {
+    return await ApiClient.request<ComposeCollectionResult>('/collection/compose', {
         method: 'POST',
         body: JSON.stringify(payload),
     });

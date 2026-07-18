@@ -7,6 +7,8 @@ import type { DiscordAuth } from '../../shared/types/discord.types.js';
 import type {
     CreateAlbumPayload,
     CreateArtistPayload,
+    ComposeCollectionPayload,
+    ComposeCollectionResult,
     CreateCollectionPayload,
     CollectionMetadata,
     CollectionReleaseSelection,
@@ -335,6 +337,12 @@ function replyWithUpstreamError(reply: { code: (statusCode: number) => unknown }
         : new UpstreamServiceError('External music service request failed');
     reply.code(upstreamError.statusCode);
     return { error: upstreamError.message };
+}
+
+class RequestError extends Error {
+    constructor(message: string, readonly statusCode = 400) {
+        super(message);
+    }
 }
 
 app.get('/api/musicbrainz/artists', async (request, reply) => {
@@ -767,6 +775,245 @@ app.get('/api/collection', async (request) => {
         data: result.rows,
         queryType: 'collection',
     };
+});
+
+app.post('/api/collection/compose', async (request, reply) => {
+    const body = request.body as Partial<ComposeCollectionPayload>;
+    const createdByUserId = body.created_by_user_id?.trim();
+    if (!createdByUserId) {
+        reply.code(400);
+        return { error: 'Collection creator is required' };
+    }
+
+    let metadata: CollectionMetadata[];
+    try {
+        metadata = normalizeMetadata(body.metadata ?? []);
+    } catch (error) {
+        reply.code(400);
+        return { error: error instanceof Error ? error.message : 'Invalid collection metadata' };
+    }
+
+    const artistSelection = body.artist;
+    const albumSelection = body.album;
+    if (!artistSelection || !albumSelection
+        || (artistSelection.type !== 'existing' && artistSelection.type !== 'new')
+        || (albumSelection.type !== 'existing' && albumSelection.type !== 'new')) {
+        reply.code(400);
+        return { error: 'Artist and album selections are required' };
+    }
+
+    let newArtist: { name: string; image: string | null; musicbrainzData: MusicBrainzArtist | null } | null = null;
+    if (artistSelection.type === 'new') {
+        const name = artistSelection.data?.name?.trim();
+        if (!name) {
+            reply.code(400);
+            return { error: 'Artist name is required' };
+        }
+        try {
+            newArtist = {
+                name,
+                image: normalizeOptionalHttpUrl(artistSelection.data.image),
+                musicbrainzData: normalizeArtistMusicBrainzData(artistSelection.data.musicbrainz_data),
+            };
+        } catch (error) {
+            reply.code(400);
+            return { error: error instanceof Error ? error.message : 'Invalid artist data' };
+        }
+    } else if (!Number.isInteger(artistSelection.id)) {
+        reply.code(400);
+        return { error: 'Artist id is required' };
+    }
+
+    let newAlbum: {
+        name: string;
+        year: number | null;
+        image: string | null;
+        musicbrainzData: MusicBrainzReleaseGroup | null;
+    } | null = null;
+    if (albumSelection.type === 'new') {
+        const name = albumSelection.data?.name?.trim();
+        const rawYear: unknown = albumSelection.data?.year;
+        const year = rawYear === undefined || rawYear === null || rawYear === '' ? null : Number(rawYear);
+        if (!name) {
+            reply.code(400);
+            return { error: 'Album name is required' };
+        }
+        if (year !== null && (!Number.isInteger(year) || year < 0)) {
+            reply.code(400);
+            return { error: 'Album year must be a positive integer' };
+        }
+        try {
+            newAlbum = {
+                name,
+                year,
+                image: normalizeOptionalHttpUrl(albumSelection.data.image),
+                musicbrainzData: normalizeAlbumMusicBrainzData(albumSelection.data.musicbrainz_data),
+            };
+        } catch (error) {
+            reply.code(400);
+            return { error: error instanceof Error ? error.message : 'Invalid album data' };
+        }
+    } else if (!Number.isInteger(albumSelection.id)) {
+        reply.code(400);
+        return { error: 'Album id is required' };
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        const userResult = await client.query<{ discord_user_id: string }>(
+            'SELECT discord_user_id FROM users WHERE discord_user_id = $1',
+            [createdByUserId],
+        );
+        if (!userResult.rows[0]) throw new RequestError('Collection creator does not exist');
+
+        let artist: DatabaseArtist | undefined;
+        if (artistSelection.type === 'existing') {
+            const result = await client.query<DatabaseArtist>(
+                'SELECT id, name, image, musicbrainz_data FROM artist WHERE id = $1',
+                [artistSelection.id],
+            );
+            artist = result.rows[0];
+            if (!artist) throw new RequestError('Artist not found', 404);
+        } else if (newArtist) {
+            const musicBrainzJson = newArtist.musicbrainzData === null
+                ? null
+                : JSON.stringify(newArtist.musicbrainzData);
+            const result = await client.query<DatabaseArtist>(
+                `
+                    INSERT INTO artist (name, image, musicbrainz_data)
+                    VALUES ($1, $2, $3::jsonb)
+                    ON CONFLICT ((musicbrainz_data->>'id'))
+                    WHERE (musicbrainz_data->>'id') IS NOT NULL
+                    DO NOTHING
+                    RETURNING id, name, image, musicbrainz_data
+                `,
+                [newArtist.name, newArtist.image, musicBrainzJson],
+            );
+            artist = result.rows[0];
+            if (!artist && newArtist.musicbrainzData) {
+                const existing = await client.query<DatabaseArtist>(
+                    `SELECT id, name, image, musicbrainz_data
+                     FROM artist WHERE musicbrainz_data->>'id' = $1`,
+                    [newArtist.musicbrainzData.id],
+                );
+                artist = existing.rows[0];
+            }
+        }
+        if (!artist) throw new RequestError('Artist could not be resolved');
+
+        let album: DatabaseAlbum | undefined;
+        if (albumSelection.type === 'existing') {
+            const result = await client.query<DatabaseAlbum>(
+                `
+                    SELECT alb.id, alb.artist_id, art.name AS artist_name,
+                           alb.name, alb.year, alb.image, alb.musicbrainz_data
+                    FROM album alb
+                    LEFT JOIN artist art ON alb.artist_id = art.id
+                    WHERE alb.id = $1
+                `,
+                [albumSelection.id],
+            );
+            album = result.rows[0];
+            if (!album) throw new RequestError('Album not found', 404);
+        } else if (newAlbum) {
+            const musicBrainzJson = newAlbum.musicbrainzData === null
+                ? null
+                : JSON.stringify(newAlbum.musicbrainzData);
+            const insertResult = await client.query<{ id: number }>(
+                `
+                    INSERT INTO album (artist_id, name, year, image, musicbrainz_data)
+                    VALUES ($1, $2, $3, $4, $5::jsonb)
+                    ON CONFLICT ((musicbrainz_data->>'id'))
+                    WHERE (musicbrainz_data->>'id') IS NOT NULL
+                    DO NOTHING
+                    RETURNING id
+                `,
+                [artist.id, newAlbum.name, newAlbum.year, newAlbum.image, musicBrainzJson],
+            );
+            let albumId = insertResult.rows[0]?.id;
+            if (!albumId && newAlbum.musicbrainzData) {
+                const existing = await client.query<{ id: number }>(
+                    `SELECT id FROM album WHERE musicbrainz_data->>'id' = $1`,
+                    [newAlbum.musicbrainzData.id],
+                );
+                albumId = existing.rows[0]?.id;
+            }
+            if (albumId) {
+                const result = await client.query<DatabaseAlbum>(
+                    `
+                        SELECT alb.id, alb.artist_id, art.name AS artist_name,
+                               alb.name, alb.year, alb.image, alb.musicbrainz_data
+                        FROM album alb
+                        LEFT JOIN artist art ON alb.artist_id = art.id
+                        WHERE alb.id = $1
+                    `,
+                    [albumId],
+                );
+                album = result.rows[0];
+            }
+        }
+        if (!album) throw new RequestError('Album could not be resolved');
+        if (album.artist_id !== artist.id) {
+            throw new RequestError('Album does not belong to selected artist');
+        }
+
+        let musicBrainzReleaseData: CollectionReleaseSelection | null;
+        try {
+            musicBrainzReleaseData = normalizeAlbumMusicBrainzReleaseData(
+                body.musicbrainz_release_data,
+                album.musicbrainz_data,
+            );
+        } catch (error) {
+            throw new RequestError(
+                error instanceof Error ? error.message : 'Invalid MusicBrainz release data',
+            );
+        }
+        const insertResult = await client.query<{ id: number }>(
+            `
+                INSERT INTO collection
+                    (artist_id, album_id, created_by_user_id, metadata, musicbrainz_release_data)
+                VALUES ($1, $2, $3, $4::jsonb, $5::jsonb)
+                RETURNING id
+            `,
+            [
+                artist.id,
+                album.id,
+                createdByUserId,
+                JSON.stringify(metadata),
+                musicBrainzReleaseData === null ? null : JSON.stringify(musicBrainzReleaseData),
+            ],
+        );
+        const collectionResult = await client.query<DatabaseCollectionItem>(
+            `${collectionItemQuery} WHERE c.id = $1`,
+            [insertResult.rows[0].id],
+        );
+        const result: ComposeCollectionResult = {
+            artist,
+            album,
+            collection: collectionResult.rows[0],
+        };
+        await client.query('COMMIT');
+        return { success: true, data: result, queryType: 'collection-compose' };
+    } catch (error) {
+        await client.query('ROLLBACK');
+        if (error instanceof RequestError) {
+            reply.code(error.statusCode);
+            return { error: error.message };
+        }
+        if (isPostgresUniqueViolation(error)) {
+            reply.code(409);
+            return { error: 'Album is already in this user collection' };
+        }
+        if (error instanceof Error && error.message.startsWith('Invalid')) {
+            reply.code(400);
+            return { error: error.message };
+        }
+        throw error;
+    } finally {
+        client.release();
+    }
 });
 
 app.post('/api/collection', async (request, reply) => {

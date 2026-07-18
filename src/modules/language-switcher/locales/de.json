@@ -116,58 +116,48 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "tabs": {
-      "artists": "Künstler",
-      "albums": "Alben",
-      "collection": "Sammlung"
+    "steps": {
+      "artist": "Künstler",
+      "album": "Album",
+      "informations": "Informationen",
+      "selectArtist": "Wähle zuerst einen Künstler im Schritt Künstler aus.",
+      "selectAlbum": "Wähle zuerst ein Album im Schritt Album aus."
     },
     "columns": {
       "album": "Album",
-      "albums": "Alben",
       "actions": "Aktionen",
       "artist": "Künstler",
       "createdBy": "Erstellt von",
       "details": "Details",
       "image": "Bild",
-      "name": "Name",
       "release": "Veröffentlichung",
       "year": "Jahr"
     },
     "actions": {
-      "addAlbum": "Album hinzufügen",
-      "addArtist": "Künstler hinzufügen",
       "addCollection": "Sammlungszeile hinzufügen",
       "add": "Hinzufügen",
       "cancel": "Abbrechen",
-      "editArtist": "Künstler bearbeiten",
-      "editAlbum": "Album bearbeiten",
-      "deleteArtist": "Künstler löschen",
-      "deleteAlbum": "Album löschen",
-      "delete": "Löschen",
       "editCollection": "Sammlungsinformationen bearbeiten",
       "removeCollection": "Sammlungselement entfernen",
       "save": "Speichern",
       "retry": "Erneut versuchen"
     },
     "modals": {
-      "addArtist": "Künstler hinzufügen",
-      "addAlbum": "Album hinzufügen",
       "addCollection": "Sammlungszeile hinzufügen",
-      "editArtist": "Künstler bearbeiten",
-      "editAlbum": "Album bearbeiten",
       "editCollection": "Sammlungsinformationen bearbeiten"
     },
     "fields": {
-      "album": "Album",
       "albumName": "Albumname",
-      "artist": "Künstler",
       "artistName": "Künstlername",
-      "image": "Bild-URL",
+      "image": "Cover-URL",
       "year": "Jahr"
     },
     "musicbrainz": {
       "searchArtist": "MusicBrainz durchsuchen oder Künstler erstellen",
       "searchAlbum": "MusicBrainz durchsuchen oder Album erstellen",
+      "existingArtist": "Vorhandener Künstler",
+      "existingAlbum": "Vorhandenes Album",
+      "musicBrainzResult": "MusicBrainz",
       "searchHint": "Mindestens 2 Zeichen eingeben, um MusicBrainz zu durchsuchen",
       "customArtistHint": "Dieser Künstler ist nicht mit MusicBrainz verknüpft; gib einen eigenen Albumnamen ein",
       "edition": "Veröffentlichung",
@@ -179,21 +169,8 @@
       "searchError": "Die MusicBrainz-Suche ist nicht verfügbar. Ein eigener Eintrag kann weiterhin erstellt werden.",
       "coverMissing": "Kein Cover gefunden. Gib eine Bild-URL manuell ein.",
       "coverError": "Die Cover-Suche ist fehlgeschlagen. Versuche es erneut oder gib eine Bild-URL manuell ein.",
-      "duplicateArtist": "Dieser MusicBrainz-Künstler wurde bereits hinzugefügt.",
-      "duplicateAlbum": "Dieses MusicBrainz-Album wurde bereits hinzugefügt.",
-      "saveError": "Der Eintrag konnte nicht gespeichert werden. Bitte versuche es erneut."
-    },
-    "delete": {
-      "artistTitle": "{name} löschen",
-      "albumTitle": "{name} löschen",
-      "simplePrompt": "Möchtest du „{name}“ wirklich löschen?",
-      "artistWarning": "Beim Löschen dieses Künstlers werden auch die unten aufgeführten Alben und Sammlungseinträge dauerhaft gelöscht.",
-      "albumWarning": "Beim Löschen dieses Albums werden auch die unten aufgeführten Sammlungseinträge dauerhaft gelöscht.",
-      "affectedAlbums": "Alben ({count})",
-      "affectedCollection": "Sammlungseinträge ({count})",
-      "unknownYear": "Unbekanntes Jahr",
-      "unknownUser": "Unbekannter Benutzer",
-      "error": "Der Eintrag konnte nicht gelöscht werden. Bitte versuche es erneut."
+      "duplicateCollection": "Dieses Album ist bereits in deiner Sammlung.",
+      "composeSaveError": "Der Sammlungseintrag konnte nicht gespeichert werden. Es wurde nichts hinzugefügt; bitte versuche es erneut."
     }
   }
 }

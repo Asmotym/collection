@@ -3,6 +3,8 @@ import { api } from "api/api";
 import type {
     CreateAlbumPayload,
     CreateArtistPayload,
+    ComposeCollectionPayload,
+    ComposeCollectionResult,
     CreateCollectionPayload,
     DatabaseAlbum,
     DatabaseArtist,
@@ -33,6 +35,7 @@ export interface CollectionActions {
     deleteArtist(id: number): Promise<void>;
     deleteAlbum(id: number): Promise<void>;
     createCollection(payload: CreateCollectionPayload): Promise<CollectionItem>;
+    composeCollection(payload: ComposeCollectionPayload): Promise<ComposeCollectionResult>;
     updateCollection(id: number, payload: UpdateCollectionPayload): Promise<CollectionItem>;
     deleteCollection(id: number): Promise<void>;
 }
@@ -127,6 +130,17 @@ export const useCollectionStore = defineStore('collection', {
             const item = await api.collection.createCollection(payload);
             this.collection.push(item);
             return item;
+        },
+        async composeCollection(payload: ComposeCollectionPayload): Promise<ComposeCollectionResult> {
+            const result = await api.collection.composeCollection(payload);
+            if (!this.artists.some((artist) => artist.id === result.artist.id)) {
+                this.artists.push(result.artist);
+            }
+            if (!this.albums.some((album) => album.id === result.album.id)) {
+                this.albums.push(result.album);
+            }
+            this.collection.push(result.collection);
+            return result;
         },
         async updateCollection(id: number, payload: UpdateCollectionPayload): Promise<CollectionItem> {
             const item = await api.collection.updateCollection(id, payload);

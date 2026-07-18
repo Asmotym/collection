@@ -158,4 +158,22 @@ export type UpdateArtistPayload = Pick<DatabaseArtist, 'name' | 'image'>;
 export type UpdateAlbumPayload = Pick<DatabaseAlbum, 'artist_id' | 'name' | 'year' | 'image'>;
 export type CreateCollectionPayload = Pick<DatabaseCollection, 'artist_id' | 'album_id' | 'created_by_user_id'>
     & Partial<Pick<DatabaseCollection, 'metadata' | 'musicbrainz_release_data'>>;
+export type ComposedArtistSelection =
+    | { type: 'existing'; id: number }
+    | { type: 'new'; data: CreateArtistPayload };
+export type ComposedAlbumSelection =
+    | { type: 'existing'; id: number }
+    | { type: 'new'; data: Omit<CreateAlbumPayload, 'artist_id'> };
+export interface ComposeCollectionPayload {
+    artist: ComposedArtistSelection;
+    album: ComposedAlbumSelection;
+    created_by_user_id: string;
+    metadata?: CollectionMetadata[];
+    musicbrainz_release_data?: CollectionReleaseSelection | null;
+}
+export interface ComposeCollectionResult {
+    artist: DatabaseArtist;
+    album: DatabaseAlbum;
+    collection: DatabaseCollectionItem;
+}
 export type UpdateCollectionPayload = Pick<DatabaseCollection, 'metadata' | 'musicbrainz_release_data'>;
