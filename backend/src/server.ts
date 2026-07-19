@@ -1,6 +1,7 @@
 import cors from '@fastify/cors';
 import Fastify from 'fastify';
 import { checkDatabase, pool } from './db.js';
+import { downloadAlbumImage } from './album-image.js';
 import { getDiscordUser } from './discord.js';
 import { isPostgresUniqueViolation } from './database-errors.js';
 import type { DiscordAuth } from '../../shared/types/discord.types.js';
@@ -110,6 +111,11 @@ await pool.query(`
 await pool.query(`
     ALTER TABLE album
     ADD COLUMN IF NOT EXISTS musicbrainz_data JSONB
+`);
+
+await pool.query(`
+    ALTER TABLE album ADD COLUMN IF NOT EXISTS image_data BYTEA;
+    ALTER TABLE album ADD COLUMN IF NOT EXISTS image_mime_type TEXT
 `);
 
 await pool.query(`
@@ -270,10 +276,12 @@ const collectionItemQuery = `
         alb.name AS album_name,
         alb.year AS album_year,
         CASE
-            WHEN alb.image_source = 'discogs' AND alb.image_reference->>'kind' IN ('master', 'release')
-                THEN '/api/catalog/images/discogs/' || (alb.image_reference->>'kind') || '/' || (alb.image_reference->>'externalId')
-            ELSE alb.image
+            WHEN alb.image_data IS NOT NULL OR alb.image IS NOT NULL
+                OR (alb.image_source = 'discogs' AND alb.image_reference->>'kind' IN ('master', 'release'))
+                THEN '/api/albums/' || alb.id || '/image'
+            ELSE NULL
         END AS album_image,
+        alb.image AS album_image_url,
         alb.image_source AS album_image_source,
         alb.image_reference AS album_image_reference,
         alb.musicbrainz_data AS album_musicbrainz_data,
@@ -850,6 +858,70 @@ app.delete('/api/artists/:id', async (request, reply) => {
     return { success: true, data: result.rows[0], queryType: 'artist' };
 });
 
+app.get('/api/albums/:id/image', async (request, reply) => {
+    const params = request.params as { id: string };
+    const albumId = Number(params.id);
+    if (!Number.isInteger(albumId)) {
+        reply.code(400);
+        return { error: 'Album id is required' };
+    }
+    const result = await pool.query<{
+        image: string | null;
+        image_data: Buffer | null;
+        image_mime_type: string | null;
+        image_source: 'manual' | 'cover-art-archive' | 'discogs' | 'fanart';
+        image_reference: CatalogCoverReference | null;
+    }>(
+        'SELECT image, image_data, image_mime_type, image_source, image_reference FROM album WHERE id = $1',
+        [albumId],
+    );
+    const album = result.rows[0];
+    if (!album) {
+        reply.code(404);
+        return { error: 'Album not found' };
+    }
+
+    let imageData = album.image_data;
+    let imageMimeType = album.image_mime_type;
+    if (!imageData || !imageMimeType) {
+        let imageUrl = album.image;
+        try {
+            const discogsReference = album.image_reference;
+            if (!imageUrl && album.image_source === 'discogs' && discogsReference?.source === 'discogs'
+                && (discogsReference.kind === 'master' || discogsReference.kind === 'release')
+                && typeof discogsReference.externalId === 'string') {
+                imageUrl = await discogsProvider.resolveImage(
+                    discogsReference.kind,
+                    discogsReference.externalId,
+                );
+            }
+            if (!imageUrl) {
+                reply.code(404);
+                return { error: 'Album image source not found' };
+            }
+            const downloaded = await downloadAlbumImage(imageUrl);
+            if (!downloaded) throw new Error('Album image source not found');
+            imageData = downloaded.data;
+            imageMimeType = downloaded.mimeType;
+            await pool.query(
+                `UPDATE album
+                 SET image = COALESCE(image, $2), image_data = $3, image_mime_type = $4
+                 WHERE id = $1 AND (image_data IS NULL OR image_mime_type IS NULL)`,
+                [albumId, imageUrl, imageData, imageMimeType],
+            );
+        } catch (error) {
+            app.log.warn({ albumId, error }, 'album image lazy backfill failed');
+            if (imageUrl) return reply.redirect(imageUrl);
+            reply.code(502);
+            return { error: 'Album image could not be generated' };
+        }
+    }
+    return reply
+        .header('Content-Type', imageMimeType)
+        .header('Cache-Control', 'no-cache')
+        .send(imageData);
+});
+
 app.get('/api/albums', async (request) => {
     const query = request.query as { artist_id?: string };
     const artistId = query.artist_id ? Number(query.artist_id) : null;
@@ -857,8 +929,10 @@ app.get('/api/albums', async (request) => {
         ? await pool.query<DatabaseAlbum>(
             `
                 SELECT alb.id, alb.artist_id, art.name AS artist_name, alb.name, alb.year,
-                    CASE WHEN alb.image_source = 'discogs' THEN '/api/catalog/images/discogs/' ||
-                        (alb.image_reference->>'kind') || '/' || (alb.image_reference->>'externalId') ELSE alb.image END AS image,
+                    CASE WHEN alb.image_data IS NOT NULL OR alb.image IS NOT NULL
+                        OR (alb.image_source = 'discogs' AND alb.image_reference->>'kind' IN ('master', 'release'))
+                        THEN '/api/albums/' || alb.id || '/image' ELSE NULL END AS image,
+                    alb.image AS image_url,
                     alb.musicbrainz_data, alb.image_source, alb.image_reference,
                     COALESCE((SELECT jsonb_agg(jsonb_build_object(
                         'source', refs.provider, 'kind', refs.entity_kind, 'externalId', refs.external_id, 'externalUrl', refs.external_url
@@ -872,8 +946,10 @@ app.get('/api/albums', async (request) => {
         )
         : await pool.query<DatabaseAlbum>(`
             SELECT alb.id, alb.artist_id, art.name AS artist_name, alb.name, alb.year,
-                CASE WHEN alb.image_source = 'discogs' THEN '/api/catalog/images/discogs/' ||
-                    (alb.image_reference->>'kind') || '/' || (alb.image_reference->>'externalId') ELSE alb.image END AS image,
+                CASE WHEN alb.image_data IS NOT NULL OR alb.image IS NOT NULL
+                    OR (alb.image_source = 'discogs' AND alb.image_reference->>'kind' IN ('master', 'release'))
+                    THEN '/api/albums/' || alb.id || '/image' ELSE NULL END AS image,
+                alb.image AS image_url,
                 alb.musicbrainz_data, alb.image_source, alb.image_reference,
                 COALESCE((SELECT jsonb_agg(jsonb_build_object(
                     'source', refs.provider, 'kind', refs.entity_kind, 'externalId', refs.external_id, 'externalUrl', refs.external_url
@@ -896,6 +972,7 @@ app.post('/api/albums', async (request, reply) => {
     const name = body.name?.trim();
     const year = body.year === undefined || body.year === null || body.year === '' ? null : Number(body.year);
     let image: string | null;
+    let storedImage: Awaited<ReturnType<typeof downloadAlbumImage>>;
     let musicBrainzData: MusicBrainzReleaseGroup | null;
 
     if (!Number.isInteger(artistId)) {
@@ -916,6 +993,7 @@ app.post('/api/albums', async (request, reply) => {
 
     try {
         image = normalizeOptionalHttpUrl(body.image);
+        storedImage = await downloadAlbumImage(image);
         musicBrainzData = normalizeAlbumMusicBrainzData(body.musicbrainz_data);
     } catch (error) {
         reply.code(400);
@@ -926,11 +1004,12 @@ app.post('/api/albums', async (request, reply) => {
     try {
         insertResult = await pool.query<{ id: number }>(
             `
-                INSERT INTO album (artist_id, name, year, image, musicbrainz_data)
-                VALUES ($1, $2, $3, $4, $5::jsonb)
+                INSERT INTO album (artist_id, name, year, image, image_data, image_mime_type, musicbrainz_data)
+                VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
                 RETURNING id
             `,
-            [artistId, name, year, image, musicBrainzData === null ? null : JSON.stringify(musicBrainzData)],
+            [artistId, name, year, image, storedImage?.data ?? null, storedImage?.mimeType ?? null,
+                musicBrainzData === null ? null : JSON.stringify(musicBrainzData)],
         );
     } catch (error) {
         if (isPostgresUniqueViolation(error)) {
@@ -941,7 +1020,9 @@ app.post('/api/albums', async (request, reply) => {
     }
     const result = await pool.query<DatabaseAlbum>(
         `
-            SELECT alb.id, alb.artist_id, art.name AS artist_name, alb.name, alb.year, alb.image, alb.musicbrainz_data
+            SELECT alb.id, alb.artist_id, art.name AS artist_name, alb.name, alb.year,
+                CASE WHEN alb.image_data IS NOT NULL THEN '/api/albums/' || alb.id || '/image' ELSE alb.image END AS image,
+                alb.image AS image_url, alb.musicbrainz_data
             FROM album alb
             LEFT JOIN artist art ON alb.artist_id = art.id
             WHERE alb.id = $1
@@ -964,6 +1045,7 @@ app.patch('/api/albums/:id', async (request, reply) => {
     const name = body.name?.trim();
     const year = body.year === undefined || body.year === null || body.year === '' ? null : Number(body.year);
     let image: string | null;
+    let storedImage: Awaited<ReturnType<typeof downloadAlbumImage>>;
 
     if (!Number.isInteger(albumId)) {
         reply.code(400);
@@ -987,6 +1069,7 @@ app.patch('/api/albums/:id', async (request, reply) => {
 
     try {
         image = normalizeOptionalHttpUrl(body.image);
+        storedImage = await downloadAlbumImage(image);
     } catch (error) {
         reply.code(400);
         return { error: error instanceof Error ? error.message : 'Invalid album image URL' };
@@ -1006,11 +1089,11 @@ app.patch('/api/albums/:id', async (request, reply) => {
         const updateResult = await client.query<{ id: number }>(
             `
                 UPDATE album
-                SET artist_id = $2, name = $3, year = $4, image = $5
+                SET artist_id = $2, name = $3, year = $4, image = $5, image_data = $6, image_mime_type = $7
                 WHERE id = $1
                 RETURNING id
             `,
-            [albumId, artistId, name, year, image],
+            [albumId, artistId, name, year, image, storedImage?.data ?? null, storedImage?.mimeType ?? null],
         );
 
         if (!updateResult.rows[0]) {
@@ -1030,7 +1113,9 @@ app.patch('/api/albums/:id', async (request, reply) => {
 
         const result = await client.query<DatabaseAlbum>(
             `
-                SELECT alb.id, alb.artist_id, art.name AS artist_name, alb.name, alb.year, alb.image, alb.musicbrainz_data
+                SELECT alb.id, alb.artist_id, art.name AS artist_name, alb.name, alb.year,
+                    CASE WHEN alb.image_data IS NOT NULL THEN '/api/albums/' || alb.id || '/image' ELSE alb.image END AS image,
+                    alb.image AS image_url, alb.musicbrainz_data
                 FROM album alb
                 LEFT JOIN artist art ON alb.artist_id = art.id
                 WHERE alb.id = $1
@@ -1150,6 +1235,8 @@ app.post('/api/collection/compose', async (request, reply) => {
         name: string;
         year: number | null;
         image: string | null;
+        imageData: Buffer | null;
+        imageMimeType: string | null;
         musicbrainzData: MusicBrainzReleaseGroup | null;
         externalReferences: CatalogExternalReference[];
         imageSource: 'manual' | 'cover-art-archive' | 'discogs' | 'fanart';
@@ -1170,10 +1257,13 @@ app.post('/api/collection/compose', async (request, reply) => {
         try {
             const image = normalizeOptionalHttpUrl(albumSelection.data.image);
             const imageReference = normalizeCoverReference(albumSelection.data.image_reference, image);
+            const storedImage = await downloadAlbumImage(image);
             newAlbum = {
                 name,
                 year,
-                image: imageReference.source === 'discogs' ? null : image,
+                image,
+                imageData: storedImage?.data ?? null,
+                imageMimeType: storedImage?.mimeType ?? null,
                 musicbrainzData: normalizeAlbumMusicBrainzData(albumSelection.data.musicbrainz_data),
                 externalReferences: normalizeExternalReferences(albumSelection.data.external_references, 'album'),
                 imageSource: imageReference.source,
@@ -1287,15 +1377,17 @@ app.post('/api/collection/compose', async (request, reply) => {
                 : JSON.stringify(newAlbum.musicbrainzData);
             const insertResult = referencedAlbumId ? { rows: [{ id: referencedAlbumId }] } : await client.query<{ id: number }>(
                 `
-                    INSERT INTO album (artist_id, name, year, image, musicbrainz_data, image_source, image_reference)
-                    VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7::jsonb)
+                    INSERT INTO album (artist_id, name, year, image, image_data, image_mime_type,
+                                       musicbrainz_data, image_source, image_reference)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9::jsonb)
                     ON CONFLICT ((musicbrainz_data->>'id'))
                     WHERE (musicbrainz_data->>'id') IS NOT NULL
                     DO NOTHING
                     RETURNING id
                 `,
-                [artist.id, newAlbum.name, newAlbum.year, newAlbum.image, musicBrainzJson,
-                    newAlbum.imageSource, JSON.stringify(newAlbum.imageReference)],
+                [artist.id, newAlbum.name, newAlbum.year, newAlbum.image, newAlbum.imageData,
+                    newAlbum.imageMimeType, musicBrainzJson, newAlbum.imageSource,
+                    JSON.stringify(newAlbum.imageReference)],
             );
             let albumId = insertResult.rows[0]?.id;
             if (!albumId && newAlbum.musicbrainzData) {
@@ -1311,8 +1403,10 @@ app.post('/api/collection/compose', async (request, reply) => {
                     `
                         SELECT alb.id, alb.artist_id, art.name AS artist_name,
                                alb.name, alb.year,
-                               CASE WHEN alb.image_source = 'discogs' THEN '/api/catalog/images/discogs/' ||
+                               CASE WHEN alb.image_data IS NOT NULL THEN '/api/albums/' || alb.id || '/image'
+                                   WHEN alb.image_source = 'discogs' THEN '/api/catalog/images/discogs/' ||
                                    (alb.image_reference->>'kind') || '/' || (alb.image_reference->>'externalId') ELSE alb.image END AS image,
+                               alb.image AS image_url,
                                alb.musicbrainz_data, alb.image_source, alb.image_reference
                         FROM album alb
                         LEFT JOIN artist art ON alb.artist_id = art.id
@@ -1508,6 +1602,8 @@ app.patch('/api/collection/:id', async (request, reply) => {
     let musicBrainzReleaseData: CollectionReleaseSelection | null;
     let artistImage: string | null;
     let albumImage: string | null;
+    let storedAlbumImage: Awaited<ReturnType<typeof downloadAlbumImage>>;
+    let albumCoverReference: CatalogCoverReference;
 
     if (!Number.isInteger(collectionId)) {
         reply.code(400);
@@ -1553,9 +1649,10 @@ app.patch('/api/collection/:id', async (request, reply) => {
 
     try {
         artistImage = normalizeOptionalHttpUrl(body.artist?.image);
-        const requestedCover = normalizeCoverReference(body.album?.image_reference,
+        albumCoverReference = normalizeCoverReference(body.album?.image_reference,
             normalizeOptionalHttpUrl(body.album?.image));
-        albumImage = requestedCover.source === 'discogs' ? null : normalizeOptionalHttpUrl(body.album?.image);
+        albumImage = normalizeOptionalHttpUrl(body.album?.image);
+        storedAlbumImage = await downloadAlbumImage(albumImage);
         metadata = normalizeMetadata(body.metadata);
         musicBrainzReleaseData = normalizeAlbumMusicBrainzReleaseData(
             body.musicbrainz_release_data,
@@ -1575,11 +1672,12 @@ app.patch('/api/collection/:id', async (request, reply) => {
             [collectionResult.rows[0].artist_id, artistName, artistImage],
         );
         await client.query(
-            `UPDATE album SET name = $2, year = $3, image = $4, image_source = $5, image_reference = $6::jsonb
+            `UPDATE album SET name = $2, year = $3, image = $4, image_data = $5, image_mime_type = $6,
+                              image_source = $7, image_reference = $8::jsonb
              WHERE id = $1`,
             [collectionResult.rows[0].album_id, albumName, albumYear, albumImage,
-                body.album?.image_source ?? (albumImage?.includes('coverartarchive.org') ? 'cover-art-archive' : 'manual'),
-                JSON.stringify(body.album?.image_reference ?? { source: albumImage?.includes('coverartarchive.org') ? 'cover-art-archive' : 'manual' })],
+                storedAlbumImage?.data ?? null, storedAlbumImage?.mimeType ?? null,
+                albumCoverReference.source, JSON.stringify(albumCoverReference)],
         );
         const updateResult = await client.query<{ id: number }>(
             `

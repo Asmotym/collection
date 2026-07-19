@@ -64,7 +64,9 @@
                     </v-icon>
                 </div>
                 <div class="image-preview-source mt-4">
-                    <a :href="src ?? undefined" target="_blank" rel="noopener noreferrer">{{ src }}</a>
+                    <a :href="sourceUrl ?? src ?? undefined" target="_blank" rel="noopener noreferrer">
+                        {{ sourceUrl ?? src }}
+                    </a>
                     <v-btn
                         size="small"
                         variant="tonal"
@@ -93,6 +95,7 @@ import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{
     src: string | null | undefined;
+    sourceUrl?: string | null;
     alt: string;
     fullWidth?: boolean;
 }>();
@@ -105,7 +108,7 @@ const thumbnailLoaded = ref(false);
 const largeImageLoaded = ref(false);
 const copyStatus = ref<'success' | 'error' | null>(null);
 
-watch(() => props.src, () => {
+watch(() => [props.src, props.sourceUrl], () => {
     thumbnailFailed.value = false;
     largeImageFailed.value = false;
     thumbnailLoaded.value = false;
@@ -122,12 +125,13 @@ watch(dialogOpen, (open) => {
 });
 
 async function copySource() {
-    if (!props.src) {
+    const source = props.sourceUrl ?? props.src;
+    if (!source) {
         return;
     }
 
     try {
-        await navigator.clipboard.writeText(props.src);
+        await navigator.clipboard.writeText(source);
         copyStatus.value = 'success';
     } catch {
         copyStatus.value = 'error';

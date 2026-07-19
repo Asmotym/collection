@@ -325,13 +325,8 @@ export class CatalogService {
         const coverProviders: Array<CatalogProvider | CatalogArtworkProvider> = [musicBrainz, discogs, ...this.artworkProviders]
             .filter((provider): provider is CatalogProvider | CatalogArtworkProvider => Boolean(provider));
         const sections: CatalogProviderSection<CatalogCoverCandidate>[] = [];
-        let coverFound = false;
         for (const provider of coverProviders) {
-            const section: CatalogProviderSection<CatalogCoverCandidate> = coverFound
-                ? { source: provider.source, status: provider.enabled ? 'ok' as const : 'disabled' as const, items: [] }
-                : await this.providerSection<CatalogCoverCandidate>(provider, () => provider.getCovers(payload));
-            sections.push(section);
-            coverFound ||= section.status === 'ok' && section.items.length > 0;
+            sections.push(await this.providerSection<CatalogCoverCandidate>(provider, () => provider.getCovers(payload)));
         }
         return sections;
     }

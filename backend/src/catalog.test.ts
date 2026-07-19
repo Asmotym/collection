@@ -136,7 +136,7 @@ test('catalog orchestration preserves provider order and returns partial failure
     assert.equal((sections[0]?.items[0] as CatalogArtistResult).name, 'Same name');
 });
 
-test('cover lookup stops after Cover Art Archive returns an image', async () => {
+test('cover lookup retrieves candidates from every enabled artwork provider', async () => {
     let discogsCalls = 0;
     const cover: CatalogCoverCandidate = {
         source: 'cover-art-archive', entityType: 'release-group', entityId: 'mb-release-group',
@@ -148,14 +148,17 @@ test('cover lookup stops after Cover Art Archive returns an image', async () => 
     });
     const service = new CatalogService([
         provider('musicbrainz', async () => [cover]),
-        provider('discogs', async () => { discogsCalls += 1; return []; }),
+        provider('discogs', async () => { discogsCalls += 1; return [{
+            source: 'discogs', entityType: 'master', entityId: '42',
+            previewUrl: 'https://i.discogs.com/cover.jpg', externalUrl: 'https://www.discogs.com/master/42',
+        }]; }),
     ]);
 
     const sections = await service.getCovers({ artistName: 'Artist', albumTitle: 'Album', references: [] });
 
-    assert.equal(discogsCalls, 0);
+    assert.equal(discogsCalls, 1);
     assert.deepEqual(sections.map((section) => [section.source, section.status, section.items.length]), [
-        ['musicbrainz', 'ok', 1], ['discogs', 'ok', 0],
+        ['musicbrainz', 'ok', 1], ['discogs', 'ok', 1],
     ]);
 });
 

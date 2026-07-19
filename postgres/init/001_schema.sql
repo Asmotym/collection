@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS album (
     name TEXT NOT NULL,
     year INTEGER,
     image TEXT,
+    image_data BYTEA,
+    image_mime_type TEXT,
     musicbrainz_data JSONB,
     image_source TEXT NOT NULL DEFAULT 'manual' CHECK (image_source IN ('manual', 'cover-art-archive', 'discogs', 'fanart')),
     image_reference JSONB

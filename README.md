@@ -39,7 +39,7 @@ Set `VITE_DISCORD_CLIENT_ID` and `VITE_DISCORD_REDIRECT_URI` when testing Discor
 
 `MUSICBRAINZ_USER_AGENT` defaults to this repository's contact URL. Override it with an application name, version, and real contact URL or email for your deployment; MusicBrainz requires this identification for API requests.
 
-Discogs, Fanart.tv, and Last.fm are optional providers. Set the matching `CATALOG_*_ENABLED` flag to `true` and provide the server-side credential to enable one. Credentials are never sent to the browser. Cover lookup tries Cover Art Archive, then Discogs, then Fanart.tv; Fanart.tv requires a MusicBrainz release-group ID. Before enabling Last.fm, confirm that the deployment is non-commercial and complies with its API approval and attribution requirements. Last.fm artwork is intentionally not used. Discogs images are resolved through the backend and cached for less than six hours.
+Discogs, Fanart.tv, and Last.fm are optional providers. Set the matching `CATALOG_*_ENABLED` flag to `true` and provide the server-side credential to enable one. Credentials are never sent to the browser. Cover lookup gathers selectable candidates from Cover Art Archive, Discogs, and Fanart.tv; Fanart.tv requires a MusicBrainz release-group ID. Before enabling Last.fm, confirm that the deployment is non-commercial and complies with its API approval and attribution requirements. Last.fm artwork is intentionally not used. Discogs images are resolved through the backend and cached for less than six hours.
 
 `VITE_API_BASE_URL` is optional. When set, it can be either the backend origin, such as `http://localhost:3000`, or the full API base, such as `http://localhost:3000/api`.
 
@@ -145,6 +145,8 @@ Schema initialization is in `postgres/init/001_schema.sql`. It creates:
 - `album`
 - `collection`
 - `users`
+
+Album rows retain the selected cover URL and store a validated copy of the image in the `image_data` (`BYTEA`) and `image_mime_type` columns. Stored artwork is served by `GET /api/albums/:id/image`; legacy rows with a URL but no image data are downloaded and backfilled the first time that endpoint is requested.
 
 The Docker database starts with schema only and no sample collection data.
 

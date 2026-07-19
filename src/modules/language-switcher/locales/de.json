@@ -159,12 +159,18 @@
       "cancel": "Abbrechen",
       "editCollection": "Sammlungsinformationen bearbeiten",
       "removeCollection": "Sammlungselement entfernen",
+      "remove": "Entfernen",
       "save": "Speichern",
       "retry": "Erneut versuchen"
     },
     "modals": {
       "addCollection": "Sammlungszeile hinzufügen",
-      "editCollection": "Sammlungsinformationen bearbeiten"
+      "editCollection": "Sammlungsinformationen bearbeiten",
+      "confirmRemoval": "Sammlungszeile entfernen?"
+    },
+    "delete": {
+      "confirm": "Möchtest du „{album}“ von {artist} wirklich aus der Sammlung entfernen?",
+      "failure": "Die Sammlungszeile konnte nicht entfernt werden."
     },
     "fields": {
       "albumName": "Albumname",
@@ -194,6 +200,7 @@
       "create": "\"{query}\" erstellen",
       "searchError": "Dieser Katalog ist nicht verfügbar. Andere Quellen und manuelle Einträge bleiben verfügbar.",
       "coverMissing": "Kein Cover gefunden. Gib eine Bild-URL manuell ein.",
+      "selectCover": "Wähle eines der gefundenen Cover aus oder gib eine URL manuell ein.",
       "coverError": "Die Cover-Suche ist fehlgeschlagen. Versuche es erneut oder gib eine Bild-URL manuell ein.",
       "duplicateCollection": "Dieses Album ist bereits in deiner Sammlung.",
       "composeSaveError": "Der Sammlungseintrag konnte nicht gespeichert werden. Es wurde nichts hinzugefügt; bitte versuche es erneut."

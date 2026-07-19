@@ -122,6 +122,7 @@ export interface DatabaseAlbum {
     name: string;
     year: number | null;
     image: string | null;
+    image_url?: string | null;
     musicbrainz_data: MusicBrainzReleaseGroup | null;
     external_references?: CatalogExternalReference[];
     image_source?: 'manual' | 'cover-art-archive' | 'discogs' | 'fanart';
@@ -152,6 +153,7 @@ export interface DatabaseCollectionItem {
     album_id: number;
     album_name: string;
     album_image: string | null;
+    album_image_url?: string | null;
     album_year: number | null;
     artist_id: number;
     artist_name: string;

@@ -159,12 +159,18 @@
       "cancel": "Annuler",
       "editCollection": "Modifier les informations de collection",
       "removeCollection": "Supprimer l'élément de collection",
+      "remove": "Supprimer",
       "save": "Enregistrer",
       "retry": "Réessayer"
     },
     "modals": {
       "addCollection": "Ajouter une ligne de collection",
-      "editCollection": "Modifier les informations de collection"
+      "editCollection": "Modifier les informations de collection",
+      "confirmRemoval": "Supprimer cette ligne de collection ?"
+    },
+    "delete": {
+      "confirm": "Voulez-vous vraiment supprimer « {album} » de {artist} de la collection ?",
+      "failure": "La ligne de collection n’a pas pu être supprimée."
     },
     "fields": {
       "albumName": "Nom de l'album",
@@ -194,6 +200,7 @@
       "create": "Créer \"{query}\"",
       "searchError": "Ce catalogue est indisponible. Les autres sources et la création manuelle restent disponibles.",
       "coverMissing": "Aucune pochette trouvée. Saisissez manuellement une URL d’image.",
+      "selectCover": "Sélectionnez une pochette parmi les résultats, ou saisissez une URL manuellement.",
       "coverError": "La recherche de pochette a échoué. Réessayez ou saisissez manuellement une URL d’image.",
       "duplicateCollection": "Cet album est déjà dans votre collection.",
       "composeSaveError": "L’entrée de collection n’a pas pu être enregistrée. Rien n’a été ajouté ; veuillez réessayer."

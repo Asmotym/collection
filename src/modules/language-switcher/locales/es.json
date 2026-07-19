@@ -159,12 +159,18 @@
       "cancel": "Cancelar",
       "editCollection": "Editar información de la colección",
       "removeCollection": "Eliminar elemento de colección",
+      "remove": "Eliminar",
       "save": "Guardar",
       "retry": "Reintentar"
     },
     "modals": {
       "addCollection": "Añadir fila de colección",
-      "editCollection": "Editar información de la colección"
+      "editCollection": "Editar información de la colección",
+      "confirmRemoval": "¿Eliminar esta fila de la colección?"
+    },
+    "delete": {
+      "confirm": "¿Seguro que quieres eliminar «{album}» de {artist} de la colección?",
+      "failure": "No se pudo eliminar la fila de la colección."
     },
     "fields": {
       "albumName": "Nombre del álbum",
@@ -194,6 +200,7 @@
       "create": "Crear \"{query}\"",
       "searchError": "Este catálogo no está disponible. Las demás fuentes y la creación manual siguen disponibles.",
       "coverMissing": "No se encontró ninguna portada. Introduce manualmente una URL de imagen.",
+      "selectCover": "Selecciona una de las portadas encontradas o introduce una URL manualmente.",
       "coverError": "La búsqueda de portada falló. Reinténtalo o introduce manualmente una URL de imagen.",
       "duplicateCollection": "Este álbum ya está en tu colección.",
       "composeSaveError": "No se pudo guardar la entrada de la colección. No se añadió nada; inténtalo de nuevo."

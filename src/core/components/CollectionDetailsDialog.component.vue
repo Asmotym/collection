@@ -4,7 +4,13 @@
             <v-card-item class="detail-header">
                 <template #prepend>
                     <div class="detail-image-wrap">
-                        <ImagePreview v-if="item.album_image" :src="item.album_image" :alt="item.album_name" full-width />
+                        <ImagePreview
+                            v-if="item.album_image"
+                            :src="item.album_image"
+                            :source-url="item.album_image_url"
+                            :alt="item.album_name"
+                            full-width
+                        />
                         <div v-else class="detail-image image-placeholder"><v-icon size="48" color="medium-emphasis">mdi-image-off-outline</v-icon></div>
                     </div>
                 </template>

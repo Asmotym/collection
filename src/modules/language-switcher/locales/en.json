@@ -159,12 +159,18 @@
       "cancel": "Cancel",
       "editCollection": "Edit collection information",
       "removeCollection": "Remove collection item",
+      "remove": "Remove",
       "save": "Save",
       "retry": "Retry"
     },
     "modals": {
       "addCollection": "Add collection row",
-      "editCollection": "Edit collection information"
+      "editCollection": "Edit collection information",
+      "confirmRemoval": "Remove collection row?"
+    },
+    "delete": {
+      "confirm": "Are you sure you want to remove “{album}” by {artist} from the collection?",
+      "failure": "The collection row could not be removed."
     },
     "fields": {
       "albumName": "Album name",
@@ -194,6 +200,7 @@
       "create": "Create \"{query}\"",
       "searchError": "Catalog search is unavailable. You can still create a custom entry.",
       "coverMissing": "No cover was found. Enter an image URL manually.",
+      "selectCover": "Select one of the retrieved covers, or enter a URL manually.",
       "coverError": "The cover lookup failed. You can retry or enter an image URL manually.",
       "duplicateCollection": "This album is already in your collection.",
       "composeSaveError": "The collection entry could not be saved. Nothing was added; please try again."

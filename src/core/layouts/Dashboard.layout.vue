@@ -29,7 +29,13 @@
                         </thead>
                         <tbody>
                             <tr v-for="item in collection" :key="item.id">
-                                <td><ImagePreview :src="item.album_image" :alt="item.album_name" /></td>
+                                <td>
+                                    <ImagePreview
+                                        :src="item.album_image"
+                                        :source-url="item.album_image_url"
+                                        :alt="item.album_name"
+                                    />
+                                </td>
                                 <td>{{ item.album_name }}</td>
                                 <td>{{ item.artist_name }}</td>
                                 <td>{{ item.album_year ?? '-' }}</td>
@@ -51,7 +57,7 @@
                                         size="small"
                                         :loading="deletingCollectionId === item.id"
                                         :aria-label="t('dashboard.actions.removeCollection')"
-                                        @click="removeCollection(item.id)"
+                                        @click="requestCollectionDeletion(item)"
                                     />
                                 </td>
                             </tr>
@@ -235,16 +241,22 @@
                                     :loading="coverStatus === 'loading'"
                                     @update:model-value="markManualCover"
                                 />
+                                <div v-if="coverCandidates.length" class="text-caption text-medium-emphasis mb-2">
+                                    {{ t('dashboard.musicbrainz.selectCover') }}
+                                </div>
                                 <div v-if="coverCandidates.length" class="d-flex flex-wrap ga-2 mb-3">
                                     <div
                                         v-for="candidate in coverCandidates"
                                         :key="`${candidate.source}:${candidate.entityType}:${candidate.entityId}`"
                                         class="cover-candidate"
+                                        :class="{ 'cover-candidate--selected': albumDraft.image === candidate.previewUrl }"
                                         role="button"
                                         tabindex="0"
+                                        :aria-pressed="albumDraft.image === candidate.previewUrl"
                                         :title="candidate.source === 'discogs' ? 'Data provided by Discogs' : candidate.source === 'fanart' ? 'Album art provided by Fanart.tv' : 'Cover Art Archive'"
                                         @click="selectCover(candidate)"
                                         @keydown.enter.prevent="selectCover(candidate)"
+                                        @keydown.space.prevent="selectCover(candidate)"
                                     >
                                         <v-img :src="candidate.previewUrl" width="72" height="72" cover />
                                         <a :href="candidate.externalUrl" target="_blank" rel="noopener noreferrer" @click.stop>
@@ -355,6 +367,7 @@
                             v-model="collectionEditForm.albumImage"
                             :label="t('dashboard.fields.albumImage')"
                             :rules="[imageUrlRule]"
+                            @update:model-value="markEditCoverManual"
                         />
                     </v-col>
                 </v-row>
@@ -381,6 +394,45 @@
                     @click="saveCollectionEdit"
                 >
                     {{ t('dashboard.actions.save') }}
+                </v-btn>
+            </v-card-actions>
+        </v-card>
+    </v-dialog>
+
+    <v-dialog
+        :model-value="pendingCollectionDeletion !== null"
+        max-width="520"
+        @update:model-value="cancelCollectionDeletion"
+    >
+        <v-card :title="t('dashboard.modals.confirmRemoval')">
+            <v-card-text>
+                <p v-if="pendingCollectionDeletion">
+                    {{ t('dashboard.delete.confirm', {
+                        album: pendingCollectionDeletion.album_name,
+                        artist: pendingCollectionDeletion.artist_name,
+                    }) }}
+                </p>
+                <v-alert
+                    v-if="collectionDeleteError"
+                    class="mt-4"
+                    type="error"
+                    variant="tonal"
+                    density="compact"
+                >
+                    {{ collectionDeleteError }}
+                </v-alert>
+            </v-card-text>
+            <v-card-actions class="justify-end">
+                <v-btn variant="text" :disabled="deletingCollectionId !== null" @click="cancelCollectionDeletion">
+                    {{ t('dashboard.actions.cancel') }}
+                </v-btn>
+                <v-btn
+                    color="error"
+                    variant="flat"
+                    :loading="deletingCollectionId !== null"
+                    @click="confirmCollectionDeletion"
+                >
+                    {{ t('dashboard.actions.remove') }}
                 </v-btn>
             </v-card-actions>
         </v-card>
@@ -431,6 +483,8 @@ const albums = ref<DatabaseAlbum[]>([]);
 const dashboardLoading = ref(true);
 const saving = ref(false);
 const deletingCollectionId = ref<number | null>(null);
+const pendingCollectionDeletion = ref<CollectionItem | null>(null);
+const collectionDeleteError = ref('');
 const showCollectionForm = ref(false);
 const showCollectionEdit = ref(false);
 const editingCollectionId = ref<number | null>(null);
@@ -650,6 +704,10 @@ const albumDraftValid = computed(() => albumDraft.value === null || (
         || (Number.isInteger(albumDraft.value.year) && albumDraft.value.year >= 0))
     && isOptionalHttpUrl(albumDraft.value.image)
 ));
+const coverSelectionValid = computed(() => albumDraft.value === null || (
+    coverStatus.value !== 'loading'
+    && (coverCandidates.value.length === 0 || albumDraft.value.image.trim() !== '')
+));
 const collectionSteps = computed(() => [
     {
         title: t('dashboard.steps.artist'),
@@ -659,7 +717,7 @@ const collectionSteps = computed(() => [
     {
         title: t('dashboard.steps.album'),
         value: 2,
-        props: { complete: albumSelected.value && albumDraftValid.value },
+        props: { complete: albumSelected.value && albumDraftValid.value && coverSelectionValid.value },
     },
     { title: t('dashboard.steps.informations'), value: 3 },
 ]);
@@ -667,6 +725,7 @@ const collectionFormValid = computed(() => artistSelected.value
     && albumSelected.value
     && artistDraftValid.value
     && albumDraftValid.value
+    && coverSelectionValid.value
     && isMetadataValid(collectionForm.value.metadata));
 const collectionEditFormValid = computed(() => collectionEditForm.value.artistName.trim() !== ''
     && collectionEditForm.value.albumName.trim() !== ''
@@ -864,14 +923,10 @@ function selectAlbumSuggestion(key: string | null) {
     if (!result) return;
     const reference: CatalogExternalReference = { source: result.source, kind: result.kind,
         externalId: result.externalId, externalUrl: result.externalUrl, musicBrainzId: result.musicBrainzId };
-    const imageReference: CatalogCoverReference = result.cover?.source === 'discogs'
-        ? { source: 'discogs', kind: result.cover.entityType as 'master' | 'release', externalId: result.cover.entityId,
-            externalUrl: result.cover.externalUrl }
-        : result.cover ? { source: 'cover-art-archive' } : { source: 'manual' };
     albumDraft.value = {
-        name: result.title, year: result.year ?? null, image: result.cover?.previewUrl ?? '',
+        name: result.title, year: result.year ?? null, image: '',
         musicbrainz_data: result.source === 'musicbrainz' ? result.rawMusicBrainz as MusicBrainzReleaseGroup : null,
-        external_references: [reference], image_reference: imageReference,
+        external_references: [reference], image_reference: { source: 'manual' },
     };
     if (result.kind === 'release' && result.source === 'discogs') {
         collectionForm.value.musicbrainz_release_data = {
@@ -884,7 +939,6 @@ function selectAlbumSuggestion(key: string | null) {
 
 async function loadCover() {
     const requestId = ++coverRequest;
-    const initialImage = albumDraft.value?.image ?? '';
     coverStatus.value = 'loading';
     try {
         if (!albumDraft.value) return;
@@ -894,10 +948,7 @@ async function loadCover() {
         const candidates = sections.flatMap((section) => section.status === 'ok' ? section.items : []);
         coverCandidates.value = [...new Map([...coverCandidates.value, ...candidates]
             .map((candidate) => [`${candidate.source}:${candidate.entityType}:${candidate.entityId}`, candidate])).values()];
-        const preferred = coverCandidates.value.find((candidate) => candidate.source === 'cover-art-archive')
-            ?? coverCandidates.value[0];
-        if (preferred) {
-            if (albumDraft.value.image === initialImage || !albumDraft.value.image) selectCover(preferred);
+        if (coverCandidates.value.length) {
             coverStatus.value = 'found';
         } else {
             coverStatus.value = albumDraft.value.image ? 'found' : 'missing';
@@ -928,6 +979,11 @@ function markManualCover(value: string) {
     if (!albumDraft.value) return;
     if (coverCandidates.value.some((candidate) => candidate.previewUrl === value)) return;
     albumDraft.value.image_reference = { source: value?.includes('coverartarchive.org') ? 'cover-art-archive' : 'manual' };
+}
+
+function markEditCoverManual() {
+    collectionEditForm.value.albumImageSource = 'manual';
+    collectionEditForm.value.albumImageReference = { source: 'manual' };
 }
 
 function getReleaseGroupThumbnailUrl(releaseGroupMbid: string): string {
@@ -1059,7 +1115,7 @@ function openCollectionEdit(item: CollectionItem) {
         artistImage: item.artist_image ?? '',
         albumName: item.album_name,
         albumYear: item.album_year,
-        albumImage: item.album_image_source === 'discogs' ? '' : item.album_image ?? '',
+        albumImage: item.album_image_url ?? '',
         albumImageSource: item.album_image_source ?? 'manual',
         albumImageReference: item.album_image_reference ?? null,
     };
@@ -1100,14 +1156,8 @@ async function saveCollectionEdit() {
                 name: collectionEditForm.value.albumName.trim(),
                 year: collectionEditForm.value.albumYear === '' ? null : collectionEditForm.value.albumYear,
                 image: collectionEditForm.value.albumImage.trim() || null,
-                image_source: collectionEditForm.value.albumImageSource === 'discogs'
-                    && !collectionEditForm.value.albumImage.startsWith('http') ? 'discogs'
-                    : collectionEditForm.value.albumImageSource === 'fanart' ? 'fanart'
-                    : collectionEditForm.value.albumImage.includes('coverartarchive.org') ? 'cover-art-archive' : 'manual',
-                image_reference: (collectionEditForm.value.albumImageSource === 'discogs'
-                    && !collectionEditForm.value.albumImage.startsWith('http')
-                    || collectionEditForm.value.albumImageSource === 'fanart')
-                    ? collectionEditForm.value.albumImageReference : null,
+                image_source: collectionEditForm.value.albumImageSource,
+                image_reference: collectionEditForm.value.albumImageReference,
             },
             metadata: collectionEditMetadata.value,
             musicbrainz_release_data: collectionEditRelease.value,
@@ -1123,11 +1173,30 @@ async function saveCollectionEdit() {
     }
 }
 
-async function removeCollection(id: number) {
-    deletingCollectionId.value = id;
+function requestCollectionDeletion(item: CollectionItem) {
+    pendingCollectionDeletion.value = item;
+    collectionDeleteError.value = '';
+}
+
+function cancelCollectionDeletion() {
+    if (deletingCollectionId.value !== null) return;
+    pendingCollectionDeletion.value = null;
+    collectionDeleteError.value = '';
+}
+
+async function confirmCollectionDeletion() {
+    const item = pendingCollectionDeletion.value;
+    if (!item || deletingCollectionId.value !== null) return;
+    deletingCollectionId.value = item.id;
+    collectionDeleteError.value = '';
     try {
-        await collectionStore.deleteCollection(id);
-        collection.value = collection.value.filter((item) => item.id !== id);
+        await collectionStore.deleteCollection(item.id);
+        collection.value = collection.value.filter((collectionItem) => collectionItem.id !== item.id);
+        pendingCollectionDeletion.value = null;
+    } catch (error) {
+        collectionDeleteError.value = error instanceof Error
+            ? error.message
+            : t('dashboard.delete.failure');
     } finally {
         deletingCollectionId.value = null;
     }
@@ -1170,6 +1239,10 @@ onMounted(async () => {
 }
 .cover-candidate:hover,
 .cover-candidate:focus-visible { border-color: rgb(var(--v-theme-primary)); }
+.cover-candidate--selected {
+    border-color: rgb(var(--v-theme-primary));
+    box-shadow: 0 0 0 2px rgba(var(--v-theme-primary), .2);
+}
 .cover-candidate small { display: block; padding: 2px; }
 .cover-candidate a,
 .catalog-source-link {
