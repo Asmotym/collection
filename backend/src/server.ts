@@ -1,9 +1,11 @@
 import cors from '@fastify/cors';
 import Fastify from 'fastify';
+import type { PoolClient } from 'pg';
 import { checkDatabase, pool } from './db.js';
 import { downloadAlbumImage } from './album-image.js';
 import { getDiscordUser } from './discord.js';
 import { isPostgresUniqueViolation } from './database-errors.js';
+import { categoryDepth, categoryDescendantIds, categorySubtreeHeight } from './category-tree.js';
 import type { DiscordAuth } from '../../shared/types/discord.types.js';
 import type {
     CreateAlbumPayload,
@@ -15,6 +17,7 @@ import type {
     CollectionReleaseSelection,
     DatabaseAlbum,
     DatabaseArtist,
+    DatabaseCategory,
     DatabaseCollectionItem,
     DatabaseUser,
     MusicBrainzArtist,
@@ -22,6 +25,9 @@ import type {
     UpdateAlbumPayload,
     UpdateArtistPayload,
     UpdateCollectionPayload,
+    CreateCategoryPayload,
+    UpdateCategoryPayload,
+    MoveCategoryPayload,
 } from '../../shared/types/database.types.js';
 import type {
     CatalogCoverReference,
@@ -233,6 +239,28 @@ await pool.query(`
 `);
 
 await pool.query(`
+    CREATE TABLE IF NOT EXISTS category (
+        id SERIAL PRIMARY KEY,
+        created_by_user_id TEXT NOT NULL REFERENCES users(discord_user_id) ON DELETE CASCADE,
+        parent_id INTEGER REFERENCES category(id) ON DELETE CASCADE,
+        name TEXT NOT NULL CHECK (char_length(btrim(name)) BETWEEN 1 AND 100),
+        position INTEGER NOT NULL CHECK (position >= 0),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS category_root_name_unique_idx
+        ON category (created_by_user_id, lower(name)) WHERE parent_id IS NULL;
+    CREATE UNIQUE INDEX IF NOT EXISTS category_child_name_unique_idx
+        ON category (parent_id, lower(name)) WHERE parent_id IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS category_user_parent_position_idx
+        ON category (created_by_user_id, parent_id, position, id);
+    CREATE TABLE IF NOT EXISTS collection_category (
+        collection_id INTEGER NOT NULL REFERENCES collection(id) ON DELETE CASCADE,
+        category_id INTEGER NOT NULL REFERENCES category(id) ON DELETE CASCADE,
+        PRIMARY KEY (collection_id, category_id)
+    );
+`);
+
+await pool.query(`
     DO $$
     BEGIN
         IF NOT EXISTS (
@@ -289,6 +317,8 @@ const collectionItemQuery = `
         c.created_by_user_id,
         u.username AS created_by_username,
         c.metadata,
+        COALESCE((SELECT jsonb_agg(cc.category_id ORDER BY cc.category_id)
+            FROM collection_category cc WHERE cc.collection_id = c.id), '[]'::jsonb) AS category_ids,
         COALESCE((SELECT jsonb_agg(jsonb_build_object(
             'source', aer.provider, 'kind', aer.entity_kind, 'externalId', aer.external_id, 'externalUrl', aer.external_url
         ) ORDER BY aer.provider) FROM artist_external_reference aer
@@ -390,6 +420,63 @@ function normalizeMetadata(value: unknown): CollectionMetadata[] {
 
         throw new Error(`Metadata entry ${index + 1} has an unknown type`);
     });
+}
+
+function normalizeCategoryName(value: unknown): string {
+    if (typeof value !== 'string') throw new Error('Category name is required');
+    const name = value.trim();
+    if (!name) throw new Error('Category name is required');
+    if (name.length > 100) throw new Error('Category name must be 100 characters or fewer');
+    return name;
+}
+
+function normalizeCategoryIds(value: unknown): number[] {
+    if (value === undefined) return [];
+    if (!Array.isArray(value)) throw new Error('Category ids must be an array');
+    const ids = [...new Set(value.map(Number))];
+    if (ids.some((id) => !Number.isInteger(id) || id <= 0)) throw new Error('Category ids are invalid');
+    return ids;
+}
+
+async function validateCategoryIds(client: PoolClient, userId: string, categoryIds: number[]) {
+    if (!categoryIds.length) return;
+    const result = await client.query<{ id: number }>(
+        'SELECT id FROM category WHERE created_by_user_id = $1 AND id = ANY($2::int[])',
+        [userId, categoryIds],
+    );
+    if (result.rows.length !== categoryIds.length) {
+        throw new RequestError('One or more categories do not belong to this user');
+    }
+}
+
+async function replaceCollectionCategories(
+    client: PoolClient,
+    collectionId: number,
+    userId: string,
+    categoryIds: number[],
+) {
+    await validateCategoryIds(client, userId, categoryIds);
+    await client.query('DELETE FROM collection_category WHERE collection_id = $1', [collectionId]);
+    if (categoryIds.length) {
+        await client.query(
+            `INSERT INTO collection_category (collection_id, category_id)
+             SELECT $1, unnest($2::int[])`,
+            [collectionId, categoryIds],
+        );
+    }
+}
+
+async function normalizeSiblingPositions(client: PoolClient, userId: string, parentId: number | null) {
+    await client.query(
+        `WITH ordered AS (
+            SELECT id, row_number() OVER (ORDER BY position, id) - 1 AS next_position
+            FROM category
+            WHERE created_by_user_id = $1 AND parent_id IS NOT DISTINCT FROM $2
+        )
+        UPDATE category c SET position = ordered.next_position
+        FROM ordered WHERE c.id = ordered.id`,
+        [userId, parentId],
+    );
 }
 
 function normalizeArtistMusicBrainzData(value: unknown): MusicBrainzArtist | null {
@@ -1156,6 +1243,157 @@ app.delete('/api/albums/:id', async (request, reply) => {
     return { success: true, data: result.rows[0], queryType: 'album' };
 });
 
+app.get('/api/categories', async (request, reply) => {
+    const query = request.query as { created_by_user_id?: string };
+    const userId = query.created_by_user_id?.trim();
+    if (!userId) {
+        reply.code(400);
+        return { error: 'Category owner is required' };
+    }
+    const result = await pool.query<DatabaseCategory>(
+        `SELECT id, created_by_user_id, parent_id, name, position, created_at
+         FROM category WHERE created_by_user_id = $1
+         ORDER BY parent_id NULLS FIRST, position, id`,
+        [userId],
+    );
+    return { success: true, data: result.rows, queryType: 'categories' };
+});
+
+app.post('/api/categories', async (request, reply) => {
+    const body = request.body as Partial<CreateCategoryPayload>;
+    const userId = body.created_by_user_id?.trim();
+    const parentId = body.parent_id === null || body.parent_id === undefined ? null : Number(body.parent_id);
+    let name: string;
+    if (!userId || (parentId !== null && !Number.isInteger(parentId))) {
+        reply.code(400);
+        return { error: 'Valid category owner and parent are required' };
+    }
+    try { name = normalizeCategoryName(body.name); } catch (error) {
+        reply.code(400); return { error: error instanceof Error ? error.message : 'Invalid category name' };
+    }
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        if (parentId !== null) {
+            const categories = await client.query<DatabaseCategory>(
+                'SELECT * FROM category WHERE created_by_user_id = $1 FOR UPDATE', [userId]);
+            if (!categories.rows.some((category) => category.id === parentId)) {
+                throw new RequestError('Category parent does not belong to this user');
+            }
+            if (categoryDepth(parentId, categories.rows) >= 3) {
+                throw new RequestError('Categories cannot be nested more than three levels');
+            }
+        }
+        const positionResult = await client.query<{ position: number }>(
+            `SELECT count(*)::int AS position FROM category
+             WHERE created_by_user_id = $1 AND parent_id IS NOT DISTINCT FROM $2`, [userId, parentId]);
+        const result = await client.query<DatabaseCategory>(
+            `INSERT INTO category (created_by_user_id, parent_id, name, position)
+             VALUES ($1, $2, $3, $4)
+             RETURNING id, created_by_user_id, parent_id, name, position, created_at`,
+            [userId, parentId, name, positionResult.rows[0].position],
+        );
+        await client.query('COMMIT');
+        return { success: true, data: result.rows[0], queryType: 'category' };
+    } catch (error) {
+        await client.query('ROLLBACK');
+        if (error instanceof RequestError) { reply.code(error.statusCode); return { error: error.message }; }
+        if (isPostgresUniqueViolation(error)) { reply.code(409); return { error: 'A sibling category already uses this name' }; }
+        throw error;
+    } finally { client.release(); }
+});
+
+app.patch('/api/categories/:id', async (request, reply) => {
+    const categoryId = Number((request.params as { id: string }).id);
+    const body = request.body as Partial<UpdateCategoryPayload>;
+    const userId = body.created_by_user_id?.trim();
+    let name: string;
+    if (!Number.isInteger(categoryId) || !userId) { reply.code(400); return { error: 'Category id and owner are required' }; }
+    try { name = normalizeCategoryName(body.name); } catch (error) {
+        reply.code(400); return { error: error instanceof Error ? error.message : 'Invalid category name' };
+    }
+    try {
+        const result = await pool.query<DatabaseCategory>(
+            `UPDATE category SET name = $3 WHERE id = $1 AND created_by_user_id = $2
+             RETURNING id, created_by_user_id, parent_id, name, position, created_at`,
+            [categoryId, userId, name],
+        );
+        if (!result.rows[0]) { reply.code(404); return { error: 'Category not found' }; }
+        return { success: true, data: result.rows[0], queryType: 'category' };
+    } catch (error) {
+        if (isPostgresUniqueViolation(error)) { reply.code(409); return { error: 'A sibling category already uses this name' }; }
+        throw error;
+    }
+});
+
+app.post('/api/categories/:id/move', async (request, reply) => {
+    const categoryId = Number((request.params as { id: string }).id);
+    const body = request.body as Partial<MoveCategoryPayload>;
+    const userId = body.created_by_user_id?.trim();
+    const parentId = body.parent_id === null || body.parent_id === undefined ? null : Number(body.parent_id);
+    const requestedPosition = Number(body.position);
+    if (!Number.isInteger(categoryId) || !userId || (parentId !== null && !Number.isInteger(parentId))
+        || !Number.isInteger(requestedPosition) || requestedPosition < 0) {
+        reply.code(400); return { error: 'Valid category move details are required' };
+    }
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const result = await client.query<DatabaseCategory>(
+            'SELECT * FROM category WHERE created_by_user_id = $1 ORDER BY position, id FOR UPDATE', [userId]);
+        const moving = result.rows.find((category) => category.id === categoryId);
+        if (!moving) throw new RequestError('Category not found', 404);
+        const descendants = categoryDescendantIds(categoryId, result.rows);
+        if (parentId !== null && descendants.has(parentId)) throw new RequestError('A category cannot be moved into its own subtree');
+        if (parentId !== null && !result.rows.some((category) => category.id === parentId)) {
+            throw new RequestError('Category parent does not belong to this user');
+        }
+        const parentDepth = parentId === null ? 0 : categoryDepth(parentId, result.rows);
+        if (parentDepth + categorySubtreeHeight(categoryId, result.rows) > 3) {
+            throw new RequestError('This move would exceed the maximum category depth');
+        }
+        const oldParentId = moving.parent_id;
+        const destination = result.rows.filter((category) => category.parent_id === parentId && category.id !== categoryId)
+            .sort((a, b) => a.position - b.position || a.id - b.id);
+        const position = Math.min(requestedPosition, destination.length);
+        destination.splice(position, 0, moving);
+        await client.query('UPDATE category SET parent_id = $2 WHERE id = $1', [categoryId, parentId]);
+        for (const [index, category] of destination.entries()) {
+            await client.query('UPDATE category SET position = $2 WHERE id = $1', [category.id, index]);
+        }
+        if (oldParentId !== parentId) await normalizeSiblingPositions(client, userId, oldParentId);
+        await client.query('COMMIT');
+        const moved = await pool.query<DatabaseCategory>(
+            'SELECT * FROM category WHERE id = $1', [categoryId]);
+        return { success: true, data: moved.rows[0], queryType: 'category' };
+    } catch (error) {
+        await client.query('ROLLBACK');
+        if (error instanceof RequestError) { reply.code(error.statusCode); return { error: error.message }; }
+        throw error;
+    } finally { client.release(); }
+});
+
+app.delete('/api/categories/:id', async (request, reply) => {
+    const categoryId = Number((request.params as { id: string }).id);
+    const userId = (request.query as { created_by_user_id?: string }).created_by_user_id?.trim();
+    if (!Number.isInteger(categoryId) || !userId) { reply.code(400); return { error: 'Category id and owner are required' }; }
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const existing = await client.query<{ parent_id: number | null }>(
+            'SELECT parent_id FROM category WHERE id = $1 AND created_by_user_id = $2 FOR UPDATE', [categoryId, userId]);
+        if (!existing.rows[0]) throw new RequestError('Category not found', 404);
+        await client.query('DELETE FROM category WHERE id = $1 AND created_by_user_id = $2', [categoryId, userId]);
+        await normalizeSiblingPositions(client, userId, existing.rows[0].parent_id);
+        await client.query('COMMIT');
+        return { success: true, data: { id: categoryId }, queryType: 'category' };
+    } catch (error) {
+        await client.query('ROLLBACK');
+        if (error instanceof RequestError) { reply.code(error.statusCode); return { error: error.message }; }
+        throw error;
+    } finally { client.release(); }
+});
+
 app.get('/api/collection', async (request) => {
     const query = request.query as { created_by_user_id?: string };
     const createdByUserId = query.created_by_user_id?.trim();
@@ -1189,8 +1427,10 @@ app.post('/api/collection/compose', async (request, reply) => {
     }
 
     let metadata: CollectionMetadata[];
+    let categoryIds: number[];
     try {
         metadata = normalizeMetadata(body.metadata ?? []);
+        categoryIds = normalizeCategoryIds(body.category_ids);
     } catch (error) {
         reply.code(400);
         return { error: error instanceof Error ? error.message : 'Invalid collection metadata' };
@@ -1448,6 +1688,7 @@ app.post('/api/collection/compose', async (request, reply) => {
                 musicBrainzReleaseData === null ? null : JSON.stringify(musicBrainzReleaseData),
             ],
         );
+        await replaceCollectionCategories(client, insertResult.rows[0].id, createdByUserId, categoryIds);
         const collectionResult = await client.query<DatabaseCollectionItem>(
             `${collectionItemQuery} WHERE c.id = $1`,
             [insertResult.rows[0].id],
@@ -1485,6 +1726,7 @@ app.post('/api/collection', async (request, reply) => {
     const albumId = Number(body.album_id);
     const createdByUserId = body.created_by_user_id?.trim();
     let metadata: CollectionMetadata[];
+    let categoryIds: number[];
     let musicBrainzReleaseData: CollectionReleaseSelection | null;
 
     if (!Number.isInteger(artistId) || !Number.isInteger(albumId)) {
@@ -1500,6 +1742,7 @@ app.post('/api/collection', async (request, reply) => {
 
     try {
         metadata = normalizeMetadata(body.metadata ?? []);
+        categoryIds = normalizeCategoryIds(body.category_ids);
     } catch (error) {
         reply.code(400);
         return { error: error instanceof Error ? error.message : 'Invalid collection metadata' };
@@ -1559,40 +1802,33 @@ app.post('/api/collection', async (request, reply) => {
         return { error: 'Album is already in this user collection' };
     }
 
-    const insertResult = await pool.query<{ id: number }>(
-        `
-            INSERT INTO collection (artist_id, album_id, created_by_user_id, metadata, musicbrainz_release_data)
-            VALUES ($1, $2, $3, $4::jsonb, $5::jsonb)
-            RETURNING id
-        `,
-        [
-            artistId,
-            albumId,
-            createdByUserId,
-            JSON.stringify(metadata),
-            musicBrainzReleaseData === null ? null : JSON.stringify(musicBrainzReleaseData),
-        ],
-    );
-
-    const result = await pool.query<DatabaseCollectionItem>(
-        `
-            ${collectionItemQuery}
-            WHERE c.id = $1
-        `,
-        [insertResult.rows[0].id],
-    );
-
-    return {
-        success: true,
-        data: result.rows[0],
-        queryType: 'collection',
-    };
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const insertResult = await client.query<{ id: number }>(
+            `INSERT INTO collection (artist_id, album_id, created_by_user_id, metadata, musicbrainz_release_data)
+             VALUES ($1, $2, $3, $4::jsonb, $5::jsonb) RETURNING id`,
+            [artistId, albumId, createdByUserId, JSON.stringify(metadata),
+                musicBrainzReleaseData === null ? null : JSON.stringify(musicBrainzReleaseData)],
+        );
+        await replaceCollectionCategories(client, insertResult.rows[0].id, createdByUserId, categoryIds);
+        const result = await client.query<DatabaseCollectionItem>(
+            `${collectionItemQuery} WHERE c.id = $1`, [insertResult.rows[0].id]);
+        await client.query('COMMIT');
+        return { success: true, data: result.rows[0], queryType: 'collection' };
+    } catch (error) {
+        await client.query('ROLLBACK');
+        if (error instanceof RequestError) { reply.code(error.statusCode); return { error: error.message }; }
+        if (isPostgresUniqueViolation(error)) { reply.code(409); return { error: 'Album is already in this user collection' }; }
+        throw error;
+    } finally { client.release(); }
 });
 
 app.patch('/api/collection/:id', async (request, reply) => {
     const params = request.params as { id: string };
     const collectionId = Number(params.id);
     const body = request.body as Partial<UpdateCollectionPayload>;
+    const createdByUserId = body.created_by_user_id?.trim();
     const artistName = body.artist?.name?.trim();
     const albumName = body.album?.name?.trim();
     const albumYear = body.album?.year === undefined || body.album.year === null
@@ -1604,10 +1840,11 @@ app.patch('/api/collection/:id', async (request, reply) => {
     let albumImage: string | null;
     let storedAlbumImage: Awaited<ReturnType<typeof downloadAlbumImage>>;
     let albumCoverReference: CatalogCoverReference;
+    let categoryIds: number[];
 
-    if (!Number.isInteger(collectionId)) {
+    if (!Number.isInteger(collectionId) || !createdByUserId) {
         reply.code(400);
-        return { error: 'Collection item id is required' };
+        return { error: 'Collection item id and owner are required' };
     }
 
     if (!artistName) {
@@ -1637,9 +1874,9 @@ app.patch('/api/collection/:id', async (request, reply) => {
                    alb.image_source, alb.image_reference
             FROM collection c
             JOIN album alb ON alb.id = c.album_id
-            WHERE c.id = $1
+            WHERE c.id = $1 AND c.created_by_user_id = $2
         `,
-        [collectionId],
+        [collectionId, createdByUserId],
     );
 
     if (!collectionResult.rows[0]) {
@@ -1654,6 +1891,7 @@ app.patch('/api/collection/:id', async (request, reply) => {
         albumImage = normalizeOptionalHttpUrl(body.album?.image);
         storedAlbumImage = await downloadAlbumImage(albumImage);
         metadata = normalizeMetadata(body.metadata);
+        categoryIds = normalizeCategoryIds(body.category_ids);
         musicBrainzReleaseData = normalizeAlbumMusicBrainzReleaseData(
             body.musicbrainz_release_data,
             collectionResult.rows[0].musicbrainz_data,
@@ -1684,13 +1922,14 @@ app.patch('/api/collection/:id', async (request, reply) => {
                 UPDATE collection
                 SET metadata = $2::jsonb,
                     musicbrainz_release_data = $3::jsonb
-                WHERE id = $1
+                WHERE id = $1 AND created_by_user_id = $4
                 RETURNING id
             `,
             [
                 collectionId,
                 JSON.stringify(metadata),
                 musicBrainzReleaseData === null ? null : JSON.stringify(musicBrainzReleaseData),
+                createdByUserId,
             ],
         );
         if (!updateResult.rows[0]) {
@@ -1698,6 +1937,7 @@ app.patch('/api/collection/:id', async (request, reply) => {
             reply.code(404);
             return { error: 'Collection item not found' };
         }
+        await replaceCollectionCategories(client, collectionId, createdByUserId, categoryIds);
         result = await client.query<DatabaseCollectionItem>(
             `${collectionItemQuery} WHERE c.id = $1`,
             [collectionId],
@@ -1720,19 +1960,20 @@ app.patch('/api/collection/:id', async (request, reply) => {
 app.delete('/api/collection/:id', async (request, reply) => {
     const params = request.params as { id: string };
     const collectionId = Number(params.id);
+    const userId = (request.query as { created_by_user_id?: string }).created_by_user_id?.trim();
 
-    if (!Number.isInteger(collectionId)) {
+    if (!Number.isInteger(collectionId) || !userId) {
         reply.code(400);
-        return { error: 'Collection item id is required' };
+        return { error: 'Collection item id and owner are required' };
     }
 
     const result = await pool.query<{ id: number }>(
         `
             DELETE FROM collection
-            WHERE id = $1
+            WHERE id = $1 AND created_by_user_id = $2
             RETURNING id
         `,
-        [collectionId],
+        [collectionId, userId],
     );
 
     if (!result.rows[0]) {

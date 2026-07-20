@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+    "test": "vitest run --config vitest.config.ts",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -14,14 +15,18 @@
     "vue": "^3.5.17",
     "vue-i18n": "^9.14.4",
     "vue-router": "^4.5.1",
+    "vuedraggable": "^4.1.0",
     "vuetify": "^4.1.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/test-utils": "^2.4.11",
     "@vue/tsconfig": "^0.7.0",
+    "jsdom": "^26.1.0",
     "sass-embedded": "^1.89.2",
     "typescript": "~5.8.3",
     "vite": "^6.2.0",
+    "vitest": "^4.1.10",
     "vue-tsc": "^2.2.4"
   }
 }

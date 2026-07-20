@@ -44,6 +44,30 @@ CREATE TABLE IF NOT EXISTS collection (
     UNIQUE (album_id, created_by_user_id)
 );
 
+CREATE TABLE IF NOT EXISTS category (
+    id SERIAL PRIMARY KEY,
+    created_by_user_id TEXT NOT NULL REFERENCES users(discord_user_id) ON DELETE CASCADE,
+    parent_id INTEGER REFERENCES category(id) ON DELETE CASCADE,
+    name TEXT NOT NULL CHECK (char_length(btrim(name)) BETWEEN 1 AND 100),
+    position INTEGER NOT NULL CHECK (position >= 0),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS category_root_name_unique_idx
+ON category (created_by_user_id, lower(name)) WHERE parent_id IS NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS category_child_name_unique_idx
+ON category (parent_id, lower(name)) WHERE parent_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS category_user_parent_position_idx
+ON category (created_by_user_id, parent_id, position, id);
+
+CREATE TABLE IF NOT EXISTS collection_category (
+    collection_id INTEGER NOT NULL REFERENCES collection(id) ON DELETE CASCADE,
+    category_id INTEGER NOT NULL REFERENCES category(id) ON DELETE CASCADE,
+    PRIMARY KEY (collection_id, category_id)
+);
+
 CREATE TABLE IF NOT EXISTS artist_external_reference (
     artist_id INTEGER NOT NULL REFERENCES artist(id) ON DELETE CASCADE,
     provider TEXT NOT NULL CHECK (provider IN ('musicbrainz', 'discogs', 'lastfm')),

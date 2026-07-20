@@ -6,7 +6,7 @@ COMPOSE_WATCH := docker compose -f docker-compose.watch.yml
 help:
 	@printf '%s\n' \
 		'Available commands:' \
-		'  make install         Install frontend and backend dependencies' \
+		'  make install         Refresh local and Docker frontend/backend dependencies' \
 		'  make build           Build frontend and backend locally' \
 		'  make frontend-build  Build the Vite frontend locally' \
 		'  make backend-build   Build the Fastify backend locally' \
@@ -32,6 +32,9 @@ help:
 install:
 	npm install
 	npm install --prefix backend
+	$(COMPOSE_WATCH) build frontend backend
+	$(COMPOSE_WATCH) run --rm --no-deps frontend npm ci
+	$(COMPOSE_WATCH) run --rm --no-deps backend npm ci --prefix backend
 
 build: frontend-build backend-build
 

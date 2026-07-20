@@ -159,8 +159,9 @@ export async function updateCollection(id: number, payload: UpdateCollectionPayl
     });
 }
 
-export async function deleteCollection(id: number) {
-    return await ApiClient.request<{ id: number }>(`/collection/${id}`, {
+export async function deleteCollection(id: number, userId: string) {
+    const query = new URLSearchParams({ created_by_user_id: userId });
+    return await ApiClient.request<{ id: number }>(`/collection/${id}?${query}`, {
         method: 'DELETE',
     });
 }

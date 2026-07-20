@@ -136,6 +136,7 @@
   },
   "dashboard": {
     "title": "Dashboard",
+    "tabs": { "collection": "Colección", "categories": "Categorías" },
     "steps": {
       "artist": "Artista",
       "album": "Álbum",
@@ -205,5 +206,18 @@
       "duplicateCollection": "Este álbum ya está en tu colección.",
       "composeSaveError": "No se pudo guardar la entrada de la colección. No se añadió nada; inténtalo de nuevo."
     }
+  },
+  "categories": {
+    "all": "Todo", "navigation": "Categorías de la colección", "openNavigation": "Abrir categorías",
+    "description": "Crea y ordena categorías para tu colección.", "addRoot": "Añadir categoría", "addChild": "Añadir subcategoría",
+    "emptyTitle": "Aún no hay categorías", "emptyText": "Crea tu primera categoría para organizar la colección.",
+    "createTitle": "Crear categoría", "editTitle": "Editar categoría", "name": "Nombre", "parent": "Categoría superior", "noParent": "Sin categoría superior",
+    "rename": "Renombrar categoría", "delete": "Eliminar categoría", "deleteTitle": "¿Eliminar categoría?",
+    "deleteConfirm": "¿Eliminar «{name}», todas sus subcategorías y sus asignaciones?",
+    "drag": "Arrastrar para ordenar", "moveUp": "Subir categoría", "moveDown": "Bajar categoría",
+    "assignmentLabel": "Categorías", "noCategoriesForAssignment": "No hay categorías disponibles.", "manage": "Gestionar categorías",
+    "emptySelectionTitle": "Esta categoría está vacía", "emptySelectionText": "Asigna elementos desde el panel.",
+    "invalidMove": "Ese movimiento crearía una jerarquía no válida.", "saveError": "No se pudo guardar la categoría.",
+    "deleteError": "No se pudo eliminar la categoría.", "moveError": "No se pudo mover la categoría.", "loadError": "No se pudieron cargar las categorías."
   }
 }

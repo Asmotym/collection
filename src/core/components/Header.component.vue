@@ -8,7 +8,7 @@
             <v-btn variant="text" :to="{ name: HomeRoutes.Base }">
                 <span>{{ t('navigation.home') }}</span>
             </v-btn>
-            <v-btn variant="text" :to="{ name: HomeRoutes.Dashboard }">
+            <v-btn variant="text" :to="{ name: HomeRoutes.DashboardCollection }">
                 <span>{{ t('navigation.dashboard') }}</span>
             </v-btn>
             <v-btn variant="text" :to="{ name: HomeRoutes.About }">

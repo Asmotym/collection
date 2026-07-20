@@ -37,7 +37,7 @@ export interface CollectionActions {
     createCollection(payload: CreateCollectionPayload): Promise<CollectionItem>;
     composeCollection(payload: ComposeCollectionPayload): Promise<ComposeCollectionResult>;
     updateCollection(id: number, payload: UpdateCollectionPayload): Promise<CollectionItem>;
-    deleteCollection(id: number): Promise<void>;
+    deleteCollection(id: number, userId: string): Promise<void>;
 }
 
 export const useCollectionStore = defineStore('collection', {
@@ -153,8 +153,8 @@ export const useCollectionStore = defineStore('collection', {
 
             return item;
         },
-        async deleteCollection(id: number): Promise<void> {
-            await api.collection.deleteCollection(id);
+        async deleteCollection(id: number, userId: string): Promise<void> {
+            await api.collection.deleteCollection(id, userId);
             this.collection = this.collection.filter((item) => item.id !== id);
         },
     },

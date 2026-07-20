@@ -136,6 +136,7 @@
   },
   "dashboard": {
     "title": "Dashboard",
+    "tabs": { "collection": "Collection", "categories": "Catégories" },
     "steps": {
       "artist": "Artiste",
       "album": "Album",
@@ -205,5 +206,18 @@
       "duplicateCollection": "Cet album est déjà dans votre collection.",
       "composeSaveError": "L’entrée de collection n’a pas pu être enregistrée. Rien n’a été ajouté ; veuillez réessayer."
     }
+  },
+  "categories": {
+    "all": "Tout", "navigation": "Catégories de la collection", "openNavigation": "Ouvrir les catégories",
+    "description": "Créez et organisez les catégories de votre collection.", "addRoot": "Ajouter une catégorie", "addChild": "Ajouter une sous-catégorie",
+    "emptyTitle": "Aucune catégorie", "emptyText": "Créez votre première catégorie pour organiser votre collection.",
+    "createTitle": "Créer une catégorie", "editTitle": "Modifier la catégorie", "name": "Nom", "parent": "Catégorie parente", "noParent": "Aucun parent",
+    "rename": "Renommer la catégorie", "delete": "Supprimer la catégorie", "deleteTitle": "Supprimer la catégorie ?",
+    "deleteConfirm": "Supprimer « {name} », toutes ses sous-catégories et leurs associations ?",
+    "drag": "Glisser pour réordonner", "moveUp": "Monter la catégorie", "moveDown": "Descendre la catégorie",
+    "assignmentLabel": "Catégories", "noCategoriesForAssignment": "Aucune catégorie disponible.", "manage": "Gérer les catégories",
+    "emptySelectionTitle": "Cette catégorie est vide", "emptySelectionText": "Associez des éléments depuis le tableau de bord.",
+    "invalidMove": "Ce déplacement créerait une hiérarchie invalide.", "saveError": "Impossible d’enregistrer la catégorie.",
+    "deleteError": "Impossible de supprimer la catégorie.", "moveError": "Impossible de déplacer la catégorie.", "loadError": "Impossible de charger les catégories."
   }
 }

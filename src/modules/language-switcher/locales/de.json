@@ -136,6 +136,7 @@
   },
   "dashboard": {
     "title": "Dashboard",
+    "tabs": { "collection": "Sammlung", "categories": "Kategorien" },
     "steps": {
       "artist": "Künstler",
       "album": "Album",
@@ -205,5 +206,18 @@
       "duplicateCollection": "Dieses Album ist bereits in deiner Sammlung.",
       "composeSaveError": "Der Sammlungseintrag konnte nicht gespeichert werden. Es wurde nichts hinzugefügt; bitte versuche es erneut."
     }
+  },
+  "categories": {
+    "all": "Alle", "navigation": "Sammlungskategorien", "openNavigation": "Kategorien öffnen",
+    "description": "Erstelle und ordne Kategorien für deine Sammlung.", "addRoot": "Kategorie hinzufügen", "addChild": "Unterkategorie hinzufügen",
+    "emptyTitle": "Noch keine Kategorien", "emptyText": "Erstelle deine erste Kategorie, um die Sammlung zu ordnen.",
+    "createTitle": "Kategorie erstellen", "editTitle": "Kategorie bearbeiten", "name": "Name", "parent": "Übergeordnete Kategorie", "noParent": "Keine übergeordnete Kategorie",
+    "rename": "Kategorie umbenennen", "delete": "Kategorie löschen", "deleteTitle": "Kategorie löschen?",
+    "deleteConfirm": "„{name}“, alle Unterkategorien und deren Zuordnungen löschen?",
+    "drag": "Zum Sortieren ziehen", "moveUp": "Kategorie nach oben", "moveDown": "Kategorie nach unten",
+    "assignmentLabel": "Kategorien", "noCategoriesForAssignment": "Keine Kategorien verfügbar.", "manage": "Kategorien verwalten",
+    "emptySelectionTitle": "Diese Kategorie ist leer", "emptySelectionText": "Ordne ihr Einträge über das Dashboard zu.",
+    "invalidMove": "Diese Verschiebung würde eine ungültige Hierarchie erzeugen.", "saveError": "Die Kategorie konnte nicht gespeichert werden.",
+    "deleteError": "Die Kategorie konnte nicht gelöscht werden.", "moveError": "Die Kategorie konnte nicht verschoben werden.", "loadError": "Kategorien konnten nicht geladen werden."
   }
 }

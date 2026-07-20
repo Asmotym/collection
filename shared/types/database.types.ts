@@ -137,6 +137,33 @@ export interface DatabaseCollection {
     created_at: string;
     metadata: CollectionMetadata[];
     musicbrainz_release_data: CollectionReleaseSelection | null;
+    category_ids: number[];
+}
+
+export interface DatabaseCategory {
+    id: number;
+    created_by_user_id: string;
+    parent_id: number | null;
+    name: string;
+    position: number;
+    created_at: string;
+}
+
+export interface CreateCategoryPayload {
+    created_by_user_id: string;
+    parent_id: number | null;
+    name: string;
+}
+
+export interface UpdateCategoryPayload {
+    created_by_user_id: string;
+    name: string;
+}
+
+export interface MoveCategoryPayload {
+    created_by_user_id: string;
+    parent_id: number | null;
+    position: number;
 }
 
 export interface DatabaseUser {
@@ -168,6 +195,7 @@ export interface DatabaseCollectionItem {
     album_external_references?: CatalogExternalReference[];
     album_image_source?: 'manual' | 'cover-art-archive' | 'discogs' | 'fanart';
     album_image_reference?: CatalogCoverReference | null;
+    category_ids: number[];
 }
 
 export type CreateArtistPayload = Pick<DatabaseArtist, 'name'>
@@ -178,7 +206,7 @@ export type UpdateArtistPayload = Pick<DatabaseArtist, 'name' | 'image'>;
 export type UpdateAlbumPayload = Pick<DatabaseAlbum, 'artist_id' | 'name' | 'year' | 'image'>
     & Partial<Pick<DatabaseAlbum, 'image_source' | 'image_reference'>>;
 export type CreateCollectionPayload = Pick<DatabaseCollection, 'artist_id' | 'album_id' | 'created_by_user_id'>
-    & Partial<Pick<DatabaseCollection, 'metadata' | 'musicbrainz_release_data'>>;
+    & Partial<Pick<DatabaseCollection, 'metadata' | 'musicbrainz_release_data' | 'category_ids'>>;
 export type ComposedArtistSelection =
     | { type: 'existing'; id: number }
     | { type: 'new'; data: CreateArtistPayload };
@@ -191,13 +219,15 @@ export interface ComposeCollectionPayload {
     created_by_user_id: string;
     metadata?: CollectionMetadata[];
     musicbrainz_release_data?: CollectionReleaseSelection | null;
+    category_ids?: number[];
 }
 export interface ComposeCollectionResult {
     artist: DatabaseArtist;
     album: DatabaseAlbum;
     collection: DatabaseCollectionItem;
 }
-export interface UpdateCollectionPayload extends Pick<DatabaseCollection, 'metadata' | 'musicbrainz_release_data'> {
+export interface UpdateCollectionPayload extends Pick<DatabaseCollection,
+    'created_by_user_id' | 'metadata' | 'musicbrainz_release_data' | 'category_ids'> {
     artist: Pick<DatabaseArtist, 'name' | 'image'>;
     album: Pick<DatabaseAlbum, 'name' | 'year' | 'image'>
         & Partial<Pick<DatabaseAlbum, 'image_source' | 'image_reference'>>;

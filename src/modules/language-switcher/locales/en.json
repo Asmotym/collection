@@ -136,6 +136,7 @@
   },
   "dashboard": {
     "title": "Dashboard",
+    "tabs": { "collection": "Collection", "categories": "Categories" },
     "steps": {
       "artist": "Artist",
       "album": "Album",
@@ -205,5 +206,18 @@
       "duplicateCollection": "This album is already in your collection.",
       "composeSaveError": "The collection entry could not be saved. Nothing was added; please try again."
     }
+  },
+  "categories": {
+    "all": "All", "navigation": "Collection categories", "openNavigation": "Open categories",
+    "description": "Create and arrange categories for your collection.", "addRoot": "Add category", "addChild": "Add child category",
+    "emptyTitle": "No categories yet", "emptyText": "Create your first category to organize your collection.",
+    "createTitle": "Create category", "editTitle": "Edit category", "name": "Name", "parent": "Parent category", "noParent": "No parent",
+    "rename": "Rename category", "delete": "Delete category", "deleteTitle": "Delete category?",
+    "deleteConfirm": "Delete “{name}”, all of its child categories, and their collection assignments?",
+    "drag": "Drag to reorder", "moveUp": "Move category up", "moveDown": "Move category down",
+    "assignmentLabel": "Categories", "noCategoriesForAssignment": "No categories are available.", "manage": "Manage categories",
+    "emptySelectionTitle": "This category is empty", "emptySelectionText": "Assign collection items to this category from the dashboard.",
+    "invalidMove": "That move would create an invalid category hierarchy.", "saveError": "The category could not be saved.",
+    "deleteError": "The category could not be deleted.", "moveError": "The category could not be moved.", "loadError": "Categories could not be loaded."
   }
 }
