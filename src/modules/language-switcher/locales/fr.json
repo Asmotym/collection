@@ -38,6 +38,12 @@
   },
   "home": {
     "title": "Ma collection",
+    "viewSize": {
+      "label": "Taille des cartes",
+      "large": "Grande",
+      "medium": "Moyenne",
+      "small": "Petite"
+    },
     "signedOut": {
       "kicker": "Toute votre discothèque au même endroit",
       "title": "Chaque disque raconte une histoire. Organisez la vôtre.",

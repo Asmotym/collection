@@ -38,6 +38,12 @@
   },
   "home": {
     "title": "Mi colección",
+    "viewSize": {
+      "label": "Tamaño de tarjeta",
+      "large": "Grande",
+      "medium": "Mediano",
+      "small": "Pequeño"
+    },
     "signedOut": {
       "kicker": "Toda tu música en un solo lugar",
       "title": "Cada disco cuenta una historia. Organiza la tuya.",

@@ -69,4 +69,34 @@ const links = computed(() => urlMetadata(props.item.metadata, true));
         radial-gradient(circle at center, rgba(var(--v-theme-on-surface), .08), transparent 42%),
         rgb(var(--v-theme-surface-variant));
 }
+
+@media (max-width: 599.98px) {
+    .collection-card--no-actions { padding-bottom: 8px; }
+    .collection-card :deep(.v-card-title) {
+        padding: 10px 10px 0;
+        font-size: .95rem;
+        line-height: 1.2rem;
+        white-space: normal;
+    }
+    .collection-card :deep(.v-card-subtitle) {
+        padding: 4px 10px 0;
+        font-size: .75rem;
+    }
+    .collection-card-image-wrap {
+        margin: 8px 10px 0 !important;
+    }
+    .collection-card :deep(.v-card-text) {
+        padding: 10px;
+        font-size: .75rem;
+    }
+    .collection-card :deep(.v-card-actions) {
+        min-height: 0;
+        padding: 4px;
+    }
+    .collection-card :deep(.v-card-actions .v-btn) {
+        min-width: 0;
+        padding-inline: 6px;
+        font-size: .7rem;
+    }
+}
 </style>

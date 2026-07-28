@@ -38,6 +38,12 @@
   },
   "home": {
     "title": "Meine Sammlung",
+    "viewSize": {
+      "label": "Kartengröße",
+      "large": "Groß",
+      "medium": "Mittel",
+      "small": "Klein"
+    },
     "signedOut": {
       "kicker": "Deine Regale an einem Ort",
       "title": "Jede Platte erzählt eine Geschichte. Ordne deine.",

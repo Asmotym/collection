@@ -38,6 +38,12 @@
   },
   "home": {
     "title": "My Collection",
+    "viewSize": {
+      "label": "Card size",
+      "large": "Large",
+      "medium": "Medium",
+      "small": "Small"
+    },
     "signedOut": {
       "kicker": "Your shelves, in one place",
       "title": "Every record tells a story. Keep yours organized.",

@@ -32,10 +32,37 @@
         />
 
         <v-container class="py-6">
-            <h1 class="text-h4 mb-4">{{ t('home.title') }}</h1>
+            <div class="collection-heading mb-4">
+                <h1 class="text-h4">{{ t('home.title') }}</h1>
+                <div v-if="collection.length" class="collection-size-control">
+                    <span class="text-body-2 text-medium-emphasis">{{ t('home.viewSize.label') }}</span>
+                    <v-btn-toggle
+                        v-model="cardSize"
+                        mandatory
+                        divided
+                        density="compact"
+                        variant="outlined"
+                        :aria-label="t('home.viewSize.label')"
+                    >
+                        <v-btn value="large">{{ t('home.viewSize.large') }}</v-btn>
+                        <v-btn value="medium">{{ t('home.viewSize.medium') }}</v-btn>
+                        <v-btn value="small">{{ t('home.viewSize.small') }}</v-btn>
+                    </v-btn-toggle>
+                </div>
+            </div>
             <AppSkeleton v-if="collectionLoading" variant="cards" :count="8" :label="t('common.loading')" />
-            <v-row v-else-if="filters.filtered.value.length">
-                <v-col v-for="item in filters.filtered.value" :key="item.id" cols="12" sm="6" md="3">
+            <v-row
+                v-else-if="filters.filtered.value.length"
+                class="collection-grid"
+                :class="`collection-grid--${cardSize}`"
+            >
+                <v-col
+                    v-for="item in filters.filtered.value"
+                    :key="item.id"
+                    class="collection-grid-item"
+                    cols="6"
+                    sm="6"
+                >
                     <CollectionCard :item="item" @open="openDetails(item)" />
                 </v-col>
             </v-row>
@@ -94,6 +121,7 @@ const authReady = ref(false);
 const collectionLoading = ref(false);
 const selectedItem = ref<CollectionItem | null>(null);
 const detailDialogOpen = ref(false);
+const cardSize = ref<'large' | 'medium' | 'small'>('large');
 const userLoggedIn = computed(() => discordService.user.value !== null);
 const { mobile } = useDisplay();
 const drawerOpen = ref(false);
@@ -143,4 +171,54 @@ onMounted(async () => {
 }
 .category-drawer { overflow-y: auto; }
 .category-drawer-toggle { position: fixed; left: 16px; top: 80px; z-index: 1005; }
+.collection-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.collection-size-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+@media (min-width: 600px) {
+    .collection-heading {
+        padding-inline-end: 72px;
+    }
+}
+
+@media (min-width: 600px) and (max-width: 959.98px) {
+    .collection-grid--medium .collection-grid-item {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+    }
+    .collection-grid--small .collection-grid-item {
+        flex: 0 0 25%;
+        max-width: 25%;
+    }
+}
+
+@media (min-width: 960px) {
+    .collection-grid--large .collection-grid-item {
+        flex: 0 0 25%;
+        max-width: 25%;
+    }
+    .collection-grid--medium .collection-grid-item {
+        flex: 0 0 20%;
+        max-width: 20%;
+    }
+    .collection-grid--small .collection-grid-item {
+        flex: 0 0 16.666667%;
+        max-width: 16.666667%;
+    }
+}
+
+@media (max-width: 599.98px) {
+    .collection-size-control {
+        display: none;
+    }
+}
 </style>
