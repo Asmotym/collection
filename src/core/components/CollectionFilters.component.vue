@@ -9,11 +9,6 @@
             <v-card class="filters-popover">
                 <v-card-title>{{ t('home.filters.title') }}</v-card-title>
                 <v-expansion-panels :model-value="[0]" multiple variant="accordion">
-                    <v-expansion-panel :title="t('home.filters.general')">
-                        <v-expansion-panel-text>
-                            <v-text-field :model-value="search" :label="t('home.filters.search')" :placeholder="t('home.filters.searchPlaceholder')" prepend-inner-icon="mdi-magnify" clearable hide-details @update:model-value="emit('update:search', $event)" />
-                        </v-expansion-panel-text>
-                    </v-expansion-panel>
                     <v-expansion-panel :title="t('home.filters.collectionDetails')">
                         <v-expansion-panel-text>
                             <v-autocomplete :model-value="artist" :items="artists" :label="t('home.filters.artist')" :no-data-text="t('home.filters.noOptions')" clearable hide-details class="mb-4" @update:model-value="emit('update:artist', $event)" />
@@ -34,7 +29,6 @@
 import { useI18n } from 'vue-i18n';
 
 defineProps<{
-    search: string | null;
     artist: string | null;
     album: string | null;
     year: number | null;
@@ -44,7 +38,6 @@ defineProps<{
     activeCount: number;
 }>();
 const emit = defineEmits<{
-    'update:search': [value: string | null];
     'update:artist': [value: string | null];
     'update:album': [value: string | null];
     'update:year': [value: number | null];

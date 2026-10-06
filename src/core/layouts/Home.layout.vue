@@ -20,7 +20,6 @@
             color="primary" :aria-label="t('categories.openNavigation')" @click="drawerOpen = true" />
         <CollectionFilters
             v-if="collection.length"
-            v-model:search="filters.search.value"
             v-model:artist="filters.artist.value"
             v-model:album="filters.album.value"
             v-model:year="filters.year.value"
@@ -34,20 +33,33 @@
         <v-container class="py-6">
             <div class="collection-heading mb-4">
                 <h1 class="text-h4">{{ t('home.title') }}</h1>
-                <div v-if="collection.length" class="collection-size-control">
-                    <span class="text-body-2 text-medium-emphasis">{{ t('home.viewSize.label') }}</span>
-                    <v-btn-toggle
-                        v-model="cardSize"
-                        mandatory
-                        divided
-                        density="compact"
+                <div v-if="collection.length" class="collection-toolbar">
+                    <v-text-field
+                        v-model="search"
+                        :label="t('home.filters.search')"
+                        :placeholder="t('home.filters.searchPlaceholder')"
+                        prepend-inner-icon="mdi-magnify"
                         variant="outlined"
-                        :aria-label="t('home.viewSize.label')"
-                    >
-                        <v-btn value="large">{{ t('home.viewSize.large') }}</v-btn>
-                        <v-btn value="medium">{{ t('home.viewSize.medium') }}</v-btn>
-                        <v-btn value="small">{{ t('home.viewSize.small') }}</v-btn>
-                    </v-btn-toggle>
+                        density="compact"
+                        clearable
+                        hide-details
+                        class="collection-search"
+                    />
+                    <div class="collection-size-control">
+                        <span class="text-body-2 text-medium-emphasis">{{ t('home.viewSize.label') }}</span>
+                        <v-btn-toggle
+                            v-model="cardSize"
+                            mandatory
+                            divided
+                            density="compact"
+                            variant="outlined"
+                            :aria-label="t('home.viewSize.label')"
+                        >
+                            <v-btn value="large">{{ t('home.viewSize.large') }}</v-btn>
+                            <v-btn value="medium">{{ t('home.viewSize.medium') }}</v-btn>
+                            <v-btn value="small">{{ t('home.viewSize.small') }}</v-btn>
+                        </v-btn-toggle>
+                    </div>
                 </div>
             </div>
             <AppSkeleton v-if="collectionLoading" variant="cards" :count="8" :label="t('common.loading')" />
@@ -133,6 +145,7 @@ const categoryScopedCollection = computed(() => {
     return collection.value.filter((item) => item.category_ids.some((id) => ids.has(id)));
 });
 const filters = useCollectionFilters(categoryScopedCollection);
+const { search } = filters;
 
 function selectCategory(id: number | null) {
     selectedCategoryId.value = id;
@@ -185,10 +198,22 @@ onMounted(async () => {
     gap: 16px;
     flex-wrap: wrap;
 }
+.collection-toolbar {
+    display: flex;
+    align-items: center;
+    flex: 1 1 560px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.collection-search {
+    flex: 1 1 240px;
+    min-width: 0;
+}
 .collection-size-control {
     display: flex;
     align-items: center;
     gap: 12px;
+    flex-shrink: 0;
 }
 
 @media (min-width: 600px) {

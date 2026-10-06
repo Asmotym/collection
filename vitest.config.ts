@@ -6,6 +6,7 @@ export default defineConfig({
     plugins: [vue()],
     test: {
         include: ['src/**/*.test.ts'],
+        server: { deps: { inline: ['vuetify'] } },
     },
     resolve: {
         alias: {
