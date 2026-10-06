@@ -4,6 +4,8 @@ COPY backend/package*.json ./backend/
 RUN npm install --prefix backend
 
 FROM deps AS build
+# Preserve the ES module scope for shared TypeScript sources outside backend/.
+COPY package.json ./
 COPY backend ./backend
 COPY shared ./shared
 RUN npm run build --prefix backend

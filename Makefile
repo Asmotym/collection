@@ -1,6 +1,6 @@
 COMPOSE := docker compose
 COMPOSE_WATCH := docker compose -f docker-compose.watch.yml
-COMPOSE_RUN := $(COMPOSE_WATCH) run --rm --no-deps --build -T
+COMPOSE_RUN := $(COMPOSE) run --rm --no-deps --build -T
 
 .PHONY: help install build frontend-build backend-build up watch watch-down start rebuild stop down destroy restart logs ps health collection db-ui dev-health dev-collection dev-db-ui clean
 
