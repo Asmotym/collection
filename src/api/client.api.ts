@@ -3,6 +3,12 @@ export class ApiClient {
 
     public static async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
         const headers = new Headers(options.headers);
+        const savedAuth = localStorage.getItem('discord_auth');
+        try {
+            const auth = savedAuth ? JSON.parse(savedAuth) : null;
+            if (auth?.accessToken) headers.set('Authorization', `Bearer ${auth.accessToken}`);
+        } catch { /* No usable saved credentials. */ }
+
 
         if (options.body && !headers.has('Content-Type')) {
             headers.set('Content-Type', 'application/json');

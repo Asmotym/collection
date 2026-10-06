@@ -8,7 +8,7 @@
             <v-btn variant="text" :to="{ name: HomeRoutes.Base }">
                 <span>{{ t('navigation.home') }}</span>
             </v-btn>
-            <v-btn variant="text" :to="{ name: HomeRoutes.DashboardCollection }">
+            <v-btn v-if="user" variant="text" :to="{ name: HomeRoutes.DashboardCollection }">
                 <span>{{ t('navigation.dashboard') }}</span>
             </v-btn>
             <v-btn variant="text" :to="{ name: HomeRoutes.About }">
@@ -27,9 +27,11 @@
 import { useI18n } from 'vue-i18n';
 import LanguageSwitcher from 'modules/language-switcher/components/LanguageSwitcher.vue';
 import DiscordAuth from 'modules/discord-auth/components/DiscordAuth.vue';
+import { DiscordService } from 'modules/discord-auth/services/discord.service';
 import { HomeRoutes } from 'core/routes';
 
 const { t } = useI18n();
+const user = DiscordService.getInstance().user;
 </script>
 
 <style scoped>

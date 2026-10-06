@@ -11,6 +11,9 @@ export type DiscordAuth = {
 export interface DiscordUser {
     id: string;
     username: string;
+    originalUsername: string;
+    customUsername: string | null;
+    collectionShared: boolean;
     avatar: string;
     rights: UserRights;
     preferences: UserPreferences;

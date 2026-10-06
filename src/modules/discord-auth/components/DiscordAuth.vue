@@ -28,6 +28,8 @@
                   <v-img :src="user.avatar" :alt="user.username" />
                 </v-avatar>
                 <h3>{{ user.username }}</h3>
+                <v-btn block variant="text" :to="{ name: HomeRoutes.UserCollection, params: { userId: user.id } }">{{ t('profile.myPage') }}</v-btn>
+                <v-btn block variant="text" :to="{ name: HomeRoutes.UserSettings, params: { userId: user.id } }">{{ t('profile.settings') }}</v-btn>
                 <v-divider class="my-3"></v-divider>
                 <v-btn variant="text" color="red" rounded @click="logout()">
                   {{ t('common.disconnect') }}
@@ -42,8 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import type { DiscordUser } from '../../../../shared/types/discord.types';
-import { ref, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { DiscordService } from 'modules/discord-auth/services/discord.service';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -53,7 +54,7 @@ const { t } = useI18n();
 
 const router = useRouter();
 const discordService = DiscordService.getInstance();
-const user = ref<DiscordUser | null>(null)
+const user = discordService.user
 
 function logout() {
   discordService.logout();
@@ -63,7 +64,7 @@ function logout() {
 
 onMounted(async () => {
   // Check if user is already logged in
-  user.value = await discordService.handleLogin();
+  await discordService.handleLogin();
 })
 </script>
 

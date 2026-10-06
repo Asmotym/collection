@@ -1,4 +1,5 @@
 import cors from '@fastify/cors';
+import { registerUserAccess, serializeUser } from './user-access.js';
 import Fastify from 'fastify';
 import type { PoolClient } from 'pg';
 import { checkDatabase, pool } from './db.js';
@@ -8,7 +9,6 @@ import { isPostgresUniqueViolation } from './database-errors.js';
 import { categoryDepth, categoryDescendantIds, categorySubtreeHeight } from './category-tree.js';
 import type { DiscordAuth } from '../../shared/types/discord.types.js';
 import {
-    DEFAULT_USER_PREFERENCES,
     type CreateAlbumPayload,
     type CreateArtistPayload,
     type ComposeCollectionPayload,
@@ -95,6 +95,9 @@ await app.register(cors, {
     origin: process.env.FRONTEND_URL || true,
     credentials: true,
 });
+
+await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS custom_username TEXT,
+    ADD COLUMN IF NOT EXISTS collection_shared BOOLEAN NOT NULL DEFAULT FALSE`);
 
 await pool.query(`
     ALTER TABLE users
@@ -338,7 +341,7 @@ const collectionItemQuery = `
         alb.musicbrainz_data AS album_musicbrainz_data,
         c.musicbrainz_release_data,
         c.created_by_user_id,
-        u.username AS created_by_username,
+        COALESCE(u.custom_username, u.username) AS created_by_username,
         c.metadata,
         COALESCE((SELECT jsonb_agg(cc.category_id ORDER BY cc.category_id)
             FROM collection_category cc WHERE cc.collection_id = c.id), '[]'::jsonb) AS category_ids,
@@ -356,6 +359,8 @@ const collectionItemQuery = `
     LEFT JOIN artist album_artist ON alb.artist_id = album_artist.id
     LEFT JOIN users u ON c.created_by_user_id = u.discord_user_id
 `;
+
+registerUserAccess(app, { pool, getDiscordUser, collectionItemQuery });
 
 function normalizeOptionalHttpUrl(value: unknown): string | null {
     if (value === undefined || value === null || value === '') {
@@ -1431,19 +1436,10 @@ app.delete('/api/categories/:id', async (request, reply) => {
 app.get('/api/collection', async (request) => {
     const query = request.query as { created_by_user_id?: string };
     const createdByUserId = query.created_by_user_id?.trim();
-    const result = createdByUserId
-        ? await pool.query<DatabaseCollectionItem>(
-            `
-                ${collectionItemQuery}
-                WHERE c.created_by_user_id = $1
-                ORDER BY c.id
-            `,
-            [createdByUserId],
-        )
-        : await pool.query<DatabaseCollectionItem>(`
-            ${collectionItemQuery}
-            ORDER BY c.id
-        `);
+    const result = await pool.query<DatabaseCollectionItem>(
+        `${collectionItemQuery} WHERE c.created_by_user_id = $1 ORDER BY c.id`,
+        [createdByUserId],
+    );
 
     return {
         success: true,
@@ -2042,7 +2038,7 @@ app.patch('/api/users/:id/preferences', async (request, reply) => {
             UPDATE users
             SET preferences = COALESCE(preferences, '{}'::jsonb) || $2::jsonb
             WHERE discord_user_id = $1
-            RETURNING discord_user_id, username, avatar, rights, preferences
+            RETURNING discord_user_id, username, custom_username, collection_shared, avatar, rights, preferences
         `,
         [userId, JSON.stringify(preferences)],
     );
@@ -2055,13 +2051,7 @@ app.patch('/api/users/:id/preferences', async (request, reply) => {
     const user = result.rows[0];
     return {
         success: true,
-        data: {
-            id: user.discord_user_id,
-            username: user.username,
-            avatar: user.avatar,
-            rights: user.rights,
-            preferences: user.preferences ?? DEFAULT_USER_PREFERENCES,
-        },
+        data: serializeUser(user),
         queryType: 'user',
     };
 });
@@ -2086,7 +2076,7 @@ app.post('/api/discord', async (request, reply) => {
                 DO UPDATE SET
                     username = EXCLUDED.username,
                     avatar = EXCLUDED.avatar
-                RETURNING discord_user_id, username, avatar, rights, preferences
+                RETURNING discord_user_id, username, custom_username, collection_shared, avatar, rights, preferences
             `,
             [discordUser.id, discordUser.username, discordUser.avatar],
         );
@@ -2094,13 +2084,7 @@ app.post('/api/discord', async (request, reply) => {
 
         return {
             success: true,
-            data: {
-                id: user.discord_user_id,
-                username: user.username,
-                avatar: user.avatar,
-                rights: user.rights,
-                preferences: user.preferences ?? DEFAULT_USER_PREFERENCES,
-            },
+            data: serializeUser(user),
             queryType,
         };
     } catch (error) {

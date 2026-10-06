@@ -76,7 +76,7 @@ export async function getReleaseGroupCover(releaseGroupMbid: string) {
     );
 }
 
-export async function getAll(createdByUserId?: string) {
+export async function getAll(createdByUserId: string) {
     const params = new URLSearchParams();
 
     if (createdByUserId) {

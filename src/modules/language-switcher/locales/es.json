@@ -228,5 +228,28 @@
     "emptySelectionTitle": "Esta categoría está vacía", "emptySelectionText": "Asigna elementos desde el panel.",
     "invalidMove": "Ese movimiento crearía una jerarquía no válida.", "saveError": "No se pudo guardar la categoría.",
     "deleteError": "No se pudo eliminar la categoría.", "moveError": "No se pudo mover la categoría.", "loadError": "No se pudieron cargar las categorías."
+  },
+  "profile": {
+    "copyLink": "Copiar enlace",
+    "linkCopied": "¡Enlace copiado!",
+    "copyError": "No se pudo copiar el enlace. Inténtalo de nuevo.",
+    "myPage": "Mi página",
+    "settings": "Configuración",
+    "emptyCollection": "Esta colección está vacía",
+    "loadError": "No se pudo cargar esta página. Inténtalo de nuevo.",
+    "collectionTitle": "Colección de {name}",
+    "unavailable": "Colección no disponible",
+    "signInRequired": "Inicia sesión para acceder a tu configuración.",
+    "signIn": "Iniciar sesión",
+    "accessDenied": "Solo puedes acceder a tu propia configuración.",
+    "editName": "Editar nombre de usuario",
+    "customName": "Nombre de usuario personalizado",
+    "nameHint": "Déjalo vacío para usar tu nombre de Discord: {name}",
+    "nameTooLong": "Usa 80 caracteres como máximo.",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "shareCollection": "Compartir mi colección",
+    "shareHint": "Cualquier persona con el enlace puede ver tu colección, categorías y detalles de los artículos.",
+    "saveError": "No se pudieron guardar los cambios. Inténtalo de nuevo."
   }
 }

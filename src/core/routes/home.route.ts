@@ -1,8 +1,9 @@
 import type { RouteRecordRaw } from "vue-router";
-import HomeLayout from "core/layouts/Home.layout.vue";
 
 export enum HomeRoutes {
     Base = 'Base',
+    UserCollection = 'UserCollection',
+    UserSettings = 'UserSettings',
     Dashboard = 'Dashboard',
     DashboardCollection = 'DashboardCollection',
     DashboardCategories = 'DashboardCategories',
@@ -11,9 +12,17 @@ export enum HomeRoutes {
 
 export const routes: RouteRecordRaw[] = [
     {
+        path: '/:userId/collection', name: HomeRoutes.UserCollection,
+        component: () => import('core/views/UserCollection.view.vue'), props: true,
+    },
+    {
+        path: '/:userId/settings', name: HomeRoutes.UserSettings,
+        component: () => import('core/views/UserSettings.view.vue'), props: true,
+    },
+    {
         path: '/',
         name: HomeRoutes.Base,
-        component: HomeLayout,
+        component: () => import('core/layouts/Home.layout.vue'),
     },
     {
         path: '/dashboard',

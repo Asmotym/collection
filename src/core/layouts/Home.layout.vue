@@ -1,283 +1,36 @@
 <template>
     <HeaderComponent />
-
-    <template v-if="userLoggedIn">
-        <v-navigation-drawer
-            v-if="categories.length"
-            v-model="drawerOpen"
-            id="collection-categories-panel"
-            :width="256"
-            :temporary="mobile"
-            disable-resize-watcher
-            class="category-drawer"
-        >
-            <div class="px-3 py-2">
-                <h2 class="text-h6 ma-0">{{ t('categories.title') }}</h2>
-            </div>
-            <v-divider />
-            <v-list nav :aria-label="t('categories.navigation')">
-                <v-list-item prepend-icon="mdi-view-grid" :title="t('categories.all')"
-                    :active="selectedCategoryId === null" @click="selectCategory(null)" />
-                <CategoryNavigationList :nodes="categoryTree" :selected-id="selectedCategoryId"
-                    @select="selectCategory" />
-            </v-list>
-        </v-navigation-drawer>
-        <v-btn
-            v-if="categories.length"
-            class="category-drawer-toggle"
-            :class="{ 'category-drawer-toggle--open': drawerOpen }"
-            :icon="drawerOpen ? 'mdi-chevron-left' : 'mdi-chevron-right'"
-            color="surface"
-            variant="elevated"
-            :aria-label="t(drawerOpen ? 'categories.hideNavigation' : 'categories.openNavigation')"
-            :aria-expanded="drawerOpen"
-            aria-controls="collection-categories-panel"
-            @click="drawerOpen = !drawerOpen"
-        />
-        <CollectionFilters
-            v-model="filtersOpen"
-            v-if="collection.length"
-            v-model:artist="filters.artist.value"
-            v-model:album="filters.album.value"
-            v-model:year="filters.year.value"
-            :artists="filters.options.value.artists"
-            :albums="filters.options.value.albums"
-            :years="filters.options.value.years"
-            :active-count="filters.activeCount.value"
-            @clear="filters.clear"
-        />
-
-        <v-container class="py-6">
-            <div class="collection-heading mb-4">
-                <h1 class="text-h4">{{ t('home.title') }}</h1>
-                <div v-if="collection.length" class="collection-toolbar">
-                    <v-text-field
-                        v-model="search"
-                        :label="t('home.filters.search')"
-                        :placeholder="t('home.filters.searchPlaceholder')"
-                        prepend-inner-icon="mdi-magnify"
-                        variant="outlined"
-                        density="compact"
-                        clearable
-                        hide-details
-                        class="collection-search"
-                    />
-                    <div class="collection-size-control">
-                        <span class="text-body-2 text-medium-emphasis">{{ t('home.viewSize.label') }}</span>
-                        <v-btn-toggle
-                            v-model="cardSize"
-                            mandatory
-                            divided
-                            density="compact"
-                            variant="outlined"
-                            :aria-label="t('home.viewSize.label')"
-                        >
-                            <v-btn value="large">{{ t('home.viewSize.large') }}</v-btn>
-                            <v-btn value="medium">{{ t('home.viewSize.medium') }}</v-btn>
-                            <v-btn value="small">{{ t('home.viewSize.small') }}</v-btn>
-                        </v-btn-toggle>
-                    </div>
-                </div>
-            </div>
-            <AppSkeleton v-if="collectionLoading" variant="cards" :count="8" :label="t('common.loading')" />
-            <v-row
-                v-else-if="filters.filtered.value.length"
-                class="collection-grid"
-                :class="`collection-grid--${cardSize}`"
-            >
-                <v-col
-                    v-for="item in filters.filtered.value"
-                    :key="item.id"
-                    class="collection-grid-item"
-                    cols="6"
-                    sm="6"
-                >
-                    <CollectionCard :item="item" @open="openDetails(item)" />
-                </v-col>
-            </v-row>
-            <v-empty-state
-                v-else-if="selectedCategoryId !== null && categoryScopedCollection.length === 0"
-                icon="mdi-folder-open-outline"
-                :title="t('categories.emptySelectionTitle')"
-                :text="t('categories.emptySelectionText')"
-            />
-            <v-empty-state
-                v-else-if="collection.length"
-                icon="mdi-filter-off-outline"
-                :title="t('home.filters.noResultsTitle')"
-                :text="t('home.filters.noResultsText')"
-            />
-        </v-container>
-
-        <CollectionDetailsDialog
-            v-model="detailDialogOpen"
-            :item="selectedItem"
-            @closed="selectedItem = null"
-        />
-    </template>
-
-    <SignedOutLanding v-else-if="authReady" @login="discordService.login()" />
-    <v-container v-else class="auth-loading">
-        <AppSkeleton type="avatar, heading, paragraph, button" :label="t('home.signedOut.loading')" />
-    </v-container>
+    <CollectionBrowser v-if="user" :key="user.id" :collection="collection" :categories="categories"
+        :title="t('home.title')" :collection-loading="loading" :error="error" />
+    <SignedOutLanding v-else-if="ready" @login="discordService.login()" />
+    <AppSkeleton v-else :label="t('common.loading')" />
 </template>
-
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
-import { useDisplay } from 'vuetify';
+import { ref, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import HeaderComponent from 'core/components/Header.component.vue';
-import AppSkeleton from 'core/components/AppSkeleton.component.vue';
-import CollectionCard from 'core/components/CollectionCard.component.vue';
-import CollectionDetailsDialog from 'core/components/CollectionDetailsDialog.component.vue';
-import CollectionFilters from 'core/components/CollectionFilters.component.vue';
+import CollectionBrowser from 'core/components/CollectionBrowser.component.vue';
 import SignedOutLanding from 'core/components/SignedOutLanding.component.vue';
-import CategoryNavigationList from 'core/components/CategoryNavigationList.component.vue';
-import { buildCategoryTree, descendantCategoryIds } from 'core/utils/category-tree.utils';
-import { useCollectionFilters } from 'core/composables/useCollectionFilters';
-import type { CollectionItem } from 'core/store/stores/collection.store';
-import { DEFAULT_USER_PREFERENCES, type CardSizePreference, type DatabaseCategory } from '../../../shared/types/database.types';
-import { store } from 'core/store/index.store';
+import AppSkeleton from 'core/components/AppSkeleton.component.vue';
 import { DiscordService } from 'modules/discord-auth/services/discord.service';
-
+import { store } from 'core/store/index.store';
+import type { DatabaseCollectionItem, DatabaseCategory } from '../../../shared/types/database.types';
 const { t } = useI18n();
 const discordService = DiscordService.getInstance();
-const collectionStore = store.collection();
-const categoryStore = store.category();
-const collection = ref<CollectionItem[]>([]);
-const categories = ref<DatabaseCategory[]>([]);
-const authReady = ref(false);
-const collectionLoading = ref(false);
-const selectedItem = ref<CollectionItem | null>(null);
-const detailDialogOpen = ref(false);
-const cardSize = ref<CardSizePreference>(DEFAULT_USER_PREFERENCES.cardSize);
-const userLoggedIn = computed(() => discordService.user.value !== null);
-const { mobile } = useDisplay();
-const filtersOpen = ref(!mobile.value);
-const drawerOpen = ref(false);
-const selectedCategoryId = ref<number | null>(null);
-const categoryTree = computed(() => buildCategoryTree(categories.value));
-const categoryScopedCollection = computed(() => {
-    if (selectedCategoryId.value === null) return collection.value;
-    const ids = descendantCategoryIds(selectedCategoryId.value, categories.value);
-    return collection.value.filter((item) => item.category_ids.some((id) => ids.has(id)));
-});
-const filters = useCollectionFilters(categoryScopedCollection);
-const { search } = filters;
-
-function selectCategory(id: number | null) {
-    selectedCategoryId.value = id;
-    filters.clear();
-    if (mobile.value) drawerOpen.value = false;
-}
-
-function openDetails(item: CollectionItem) {
-    selectedItem.value = item;
-    detailDialogOpen.value = true;
-}
-
-watch(cardSize, async (size) => {
-    const user = discordService.user.value;
-    if (!user || user.preferences.cardSize === size) return;
-    await discordService.updatePreferences({ cardSize: size });
-});
-
-onMounted(async () => {
+const user = discordService.user;
+const ready = ref(false), loading = ref(false), error = ref('');
+const collection = ref<DatabaseCollectionItem[]>([]), categories = ref<DatabaseCategory[]>([]);
+let generation = 0;
+watch(() => user.value?.id, async (id) => {
+    const current = ++generation;
+    collection.value = []; categories.value = []; error.value = '';
+    if (!id) { loading.value = false; return; }
+    loading.value = true;
     try {
-        const user = await discordService.handleLogin();
-        authReady.value = true;
-        if (user) {
-            cardSize.value = user.preferences?.cardSize ?? DEFAULT_USER_PREFERENCES.cardSize;
-            collectionLoading.value = true;
-            [collection.value, categories.value] = await Promise.all([
-                collectionStore.getAll(user.id), categoryStore.getAll(user.id),
-            ]);
-            drawerOpen.value = !mobile.value;
-        }
-    } finally {
-        collectionLoading.value = false;
-        authReady.value = true;
-    }
-});
+        const result = await Promise.all([store.collection().getAll(id), store.category().getAll(id)]);
+        if (current === generation) [collection.value, categories.value] = result;
+    } catch { if (current === generation) error.value = t('profile.loadError'); }
+    finally { if (current === generation) loading.value = false; }
+}, { immediate: true });
+onMounted(async () => { try { await discordService.handleLogin(); } finally { ready.value = true; } });
 </script>
-
-<style scoped>
-.auth-loading {
-    width: min(900px, 100%);
-    min-height: calc(100vh - 64px);
-    padding-top: clamp(48px, 10vw, 120px);
-}
-.category-drawer { overflow-y: auto; max-width: calc(100vw - 48px); }
-.category-drawer-toggle {
-    position: fixed;
-    top: 50%;
-    left: 0;
-    z-index: 1016;
-    width: 32px;
-    height: 56px;
-    border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
-    border-radius: 0 8px 8px 0;
-    transform: translateY(-50%);
-    transition: left .2s cubic-bezier(.4, 0, .2, 1);
-}
-.category-drawer-toggle--open {
-    left: calc(min(256px, calc(100vw - 48px)) - 16px);
-    border-radius: 8px;
-}
-.collection-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-.collection-toolbar {
-    display: flex;
-    align-items: center;
-    flex: 1 1 560px;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-.collection-search {
-    flex: 1 1 240px;
-    min-width: 0;
-}
-.collection-size-control {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-shrink: 0;
-}
-
-@media (min-width: 600px) and (max-width: 959.98px) {
-    .collection-grid--medium .collection-grid-item {
-        flex: 0 0 33.333333%;
-        max-width: 33.333333%;
-    }
-    .collection-grid--small .collection-grid-item {
-        flex: 0 0 25%;
-        max-width: 25%;
-    }
-}
-
-@media (min-width: 960px) {
-    .collection-grid--large .collection-grid-item {
-        flex: 0 0 25%;
-        max-width: 25%;
-    }
-    .collection-grid--medium .collection-grid-item {
-        flex: 0 0 20%;
-        max-width: 20%;
-    }
-    .collection-grid--small .collection-grid-item {
-        flex: 0 0 16.666667%;
-        max-width: 16.666667%;
-    }
-}
-
-@media (max-width: 599.98px) {
-    .collection-size-control {
-        display: none;
-    }
-}
-</style>

@@ -228,5 +228,28 @@
     "emptySelectionTitle": "Diese Kategorie ist leer", "emptySelectionText": "Ordne ihr Einträge über das Dashboard zu.",
     "invalidMove": "Diese Verschiebung würde eine ungültige Hierarchie erzeugen.", "saveError": "Die Kategorie konnte nicht gespeichert werden.",
     "deleteError": "Die Kategorie konnte nicht gelöscht werden.", "moveError": "Die Kategorie konnte nicht verschoben werden.", "loadError": "Kategorien konnten nicht geladen werden."
+  },
+  "profile": {
+    "copyLink": "Link kopieren",
+    "linkCopied": "Link kopiert!",
+    "copyError": "Der Link konnte nicht kopiert werden. Bitte erneut versuchen.",
+    "myPage": "Meine Seite",
+    "settings": "Einstellungen",
+    "emptyCollection": "Diese Sammlung ist leer",
+    "loadError": "Diese Seite konnte nicht geladen werden. Bitte erneut versuchen.",
+    "collectionTitle": "Sammlung von {name}",
+    "unavailable": "Sammlung nicht verfügbar",
+    "signInRequired": "Melde dich an, um deine Einstellungen aufzurufen.",
+    "signIn": "Anmelden",
+    "accessDenied": "Du kannst nur auf deine eigenen Einstellungen zugreifen.",
+    "editName": "Benutzernamen bearbeiten",
+    "customName": "Eigener Benutzername",
+    "nameHint": "Leer lassen, um deinen Discord-Namen zu verwenden: {name}",
+    "nameTooLong": "Verwende höchstens 80 Zeichen.",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "shareCollection": "Meine Sammlung teilen",
+    "shareHint": "Alle mit dem Link können deine Sammlung, Kategorien und Artikeldetails ansehen.",
+    "saveError": "Deine Änderungen konnten nicht gespeichert werden. Bitte erneut versuchen."
   }
 }

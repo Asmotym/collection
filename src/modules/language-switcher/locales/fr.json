@@ -228,5 +228,28 @@
     "emptySelectionTitle": "Cette catégorie est vide", "emptySelectionText": "Associez des éléments depuis le tableau de bord.",
     "invalidMove": "Ce déplacement créerait une hiérarchie invalide.", "saveError": "Impossible d’enregistrer la catégorie.",
     "deleteError": "Impossible de supprimer la catégorie.", "moveError": "Impossible de déplacer la catégorie.", "loadError": "Impossible de charger les catégories."
+  },
+  "profile": {
+    "copyLink": "Copier le lien",
+    "linkCopied": "Lien copié !",
+    "copyError": "Impossible de copier le lien. Veuillez réessayer.",
+    "myPage": "Ma page",
+    "settings": "Paramètres",
+    "emptyCollection": "Cette collection est vide",
+    "loadError": "Impossible de charger cette page. Veuillez réessayer.",
+    "collectionTitle": "Collection de {name}",
+    "unavailable": "Collection indisponible",
+    "signInRequired": "Connectez-vous pour accéder à vos paramètres.",
+    "signIn": "Se connecter",
+    "accessDenied": "Vous pouvez uniquement accéder à vos propres paramètres.",
+    "editName": "Modifier le nom d’utilisateur",
+    "customName": "Nom d’utilisateur personnalisé",
+    "nameHint": "Laissez vide pour utiliser votre nom Discord : {name}",
+    "nameTooLong": "Utilisez 80 caractères maximum.",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "shareCollection": "Partager ma collection",
+    "shareHint": "Toute personne disposant du lien peut consulter votre collection, vos catégories et les détails des éléments.",
+    "saveError": "Impossible d’enregistrer vos modifications. Veuillez réessayer."
   }
 }

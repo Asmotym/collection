@@ -17,16 +17,17 @@ export class DiscordService {
         return DiscordService.instance;
     }
 
-    public async handleLogin(): Promise<DiscordUser | null> {
+    private initialization: Promise<DiscordUser | null> | null = null;
+
+    public handleLogin(): Promise<DiscordUser | null> {
+        return this.initialization ??= this.initialize();
+    }
+
+    private async initialize(): Promise<DiscordUser | null> {
         // Handle OAuth callback
         if (window.location.hash.includes('token_type=')) {
             await this.handleAuthCallback();
             return this.user.value;
-        }
-
-        const savedUser = this.getUser();
-        if (savedUser !== null) {
-            this.storeUser(savedUser);
         }
 
         const auth = this.getAuth();
@@ -34,9 +35,8 @@ export class DiscordService {
             try {
                 await this.fetchUserInfo(auth);
             } catch (error) {
-                if (savedUser === null) {
-                    throw error;
-                }
+                this.removeAuth();
+                this.removeUser();
             }
         }
 
@@ -59,6 +59,7 @@ export class DiscordService {
     }
 
     public logout() {
+        this.initialization = null;
         this.removeAuth();
         this.removeUser();
         this.removeOauthState();
@@ -103,7 +104,7 @@ export class DiscordService {
         }
 
         const updatedUser = await api.user.updatePreferences(user.id, preferences);
-        this.storeUser(updatedUser);
+        if (this.user.value?.id === user.id) this.storeUser(updatedUser);
         return updatedUser;
     }
 
@@ -120,7 +121,7 @@ export class DiscordService {
             throw new Error('[DiscordAuth] Failed to fetch user info');
         }
 
-        this.storeUser(data.data);
+        if (this.getAuth()?.accessToken === auth.accessToken) this.storeUser(data.data);
         return data.data;
     }
 
@@ -133,9 +134,12 @@ export class DiscordService {
         return result;
     }
 
-    protected storeUser(user: DiscordUser) {
+    public storeUser(user: DiscordUser) {
         const normalizedUser: DiscordUser = {
             ...user,
+            originalUsername: user.originalUsername ?? user.username,
+            customUsername: user.customUsername ?? null,
+            collectionShared: user.collectionShared ?? false,
             rights: user.rights ?? 'user',
             preferences: user.preferences ?? DEFAULT_USER_PREFERENCES,
         };
@@ -182,7 +186,7 @@ export class DiscordService {
 
     public getAuth(): DiscordAuth | null {
         const auth = localStorage.getItem('discord_auth');
-        return auth ? JSON.parse(auth) : null;
+        try { return auth ? JSON.parse(auth) : null; } catch { return null; }
     }
 
     public getOauthState(): string | null {

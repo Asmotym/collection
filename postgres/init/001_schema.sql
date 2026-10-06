@@ -29,6 +29,8 @@ WHERE musicbrainz_data->>'id' IS NOT NULL;
 CREATE TABLE IF NOT EXISTS users (
     discord_user_id TEXT PRIMARY KEY,
     username TEXT NOT NULL,
+    custom_username TEXT,
+    collection_shared BOOLEAN NOT NULL DEFAULT FALSE,
     avatar TEXT,
     rights TEXT NOT NULL DEFAULT 'user' CHECK (rights IN ('user', 'admin')),
     preferences JSONB NOT NULL DEFAULT '{"cardSize":"large"}'::jsonb

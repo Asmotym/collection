@@ -25,7 +25,7 @@ export interface CollectionState {
 export interface CollectionGetters {}
 
 export interface CollectionActions {
-    getAll(createdByUserId?: string): Promise<CollectionItem[]>;
+    getAll(createdByUserId: string): Promise<CollectionItem[]>;
     getArtists(): Promise<DatabaseArtist[]>;
     getAlbums(artistId?: number): Promise<DatabaseAlbum[]>;
     createArtist(payload: CreateArtistPayload): Promise<DatabaseArtist>;
@@ -48,7 +48,7 @@ export const useCollectionStore = defineStore('collection', {
     }),
     getters: {},
     actions: {
-        async getAll(createdByUserId?: string): Promise<CollectionItem[]> {
+        async getAll(createdByUserId: string): Promise<CollectionItem[]> {
             const response = await api.collection.getAll(createdByUserId);
             this.collection = response as CollectionItem[];
             return this.collection;

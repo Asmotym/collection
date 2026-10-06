@@ -228,5 +228,28 @@
     "emptySelectionTitle": "This category is empty", "emptySelectionText": "Assign collection items to this category from the dashboard.",
     "invalidMove": "That move would create an invalid category hierarchy.", "saveError": "The category could not be saved.",
     "deleteError": "The category could not be deleted.", "moveError": "The category could not be moved.", "loadError": "Categories could not be loaded."
+  },
+  "profile": {
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied!",
+    "copyError": "Unable to copy the link. Please try again.",
+    "myPage": "My Page",
+    "settings": "Settings",
+    "emptyCollection": "This collection is empty",
+    "loadError": "Unable to load this page. Please try again.",
+    "collectionTitle": "{name}’s collection",
+    "unavailable": "Collection unavailable",
+    "signInRequired": "Sign in to access your settings.",
+    "signIn": "Sign in",
+    "accessDenied": "You can only access your own settings.",
+    "editName": "Edit username",
+    "customName": "Custom username",
+    "nameHint": "Leave empty to use your Discord name: {name}",
+    "nameTooLong": "Use 80 characters or fewer.",
+    "save": "Save",
+    "cancel": "Cancel",
+    "shareCollection": "Share my collection",
+    "shareHint": "Anyone with the link can view your collection, categories, and item details.",
+    "saveError": "Unable to save your changes. Please try again."
   }
 }

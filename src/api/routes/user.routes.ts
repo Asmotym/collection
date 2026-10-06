@@ -8,3 +8,24 @@ export async function updatePreferences(userId: string, preferences: UserPrefere
         body: JSON.stringify(preferences),
     });
 }
+
+export interface UserSettingsUpdate {
+    customUsername?: string | null;
+    collectionShared?: boolean;
+}
+export interface UserCollection {
+    owner: { id: string; username: string; avatar: string | null };
+    collection: import('../../../shared/types/database.types').DatabaseCollectionItem[];
+    categories: import('../../../shared/types/database.types').DatabaseCategory[];
+}
+export function getSettings(userId: string) {
+    return ApiClient.request<DiscordUser>(`/users/${encodeURIComponent(userId)}/settings`);
+}
+export function updateSettings(userId: string, settings: UserSettingsUpdate) {
+    return ApiClient.request<DiscordUser>(`/users/${encodeURIComponent(userId)}/settings`, {
+        method: 'PATCH', body: JSON.stringify(settings),
+    });
+}
+export function getCollection(userId: string) {
+    return ApiClient.request<UserCollection>(`/users/${encodeURIComponent(userId)}/collection`);
+}

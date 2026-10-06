@@ -177,6 +177,8 @@ export interface MoveCategoryPayload {
 }
 
 export interface DatabaseUser {
+    custom_username: string | null;
+    collection_shared: boolean;
     discord_user_id?: string;
     username: string;
     avatar: string | null;
