@@ -75,6 +75,7 @@
     "filters": {
       "title": "Filter",
       "open": "Filter öffnen",
+      "hide": "Filter ausblenden",
       "clear": "Filter zurücksetzen",
       "activeCount": "Aktive Filter: {count}",
       "general": "Allgemein",
@@ -214,7 +215,9 @@
     }
   },
   "categories": {
+    "title": "Kategorien",
     "all": "Alle", "navigation": "Sammlungskategorien", "openNavigation": "Kategorien öffnen",
+    "hideNavigation": "Kategorien ausblenden",
     "description": "Erstelle und ordne Kategorien für deine Sammlung.", "addRoot": "Kategorie hinzufügen", "addChild": "Unterkategorie hinzufügen",
     "emptyTitle": "Noch keine Kategorien", "emptyText": "Erstelle deine erste Kategorie, um die Sammlung zu ordnen.",
     "createTitle": "Kategorie erstellen", "editTitle": "Kategorie bearbeiten", "name": "Name", "parent": "Übergeordnete Kategorie", "noParent": "Keine übergeordnete Kategorie",

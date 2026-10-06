@@ -5,10 +5,16 @@
         <v-navigation-drawer
             v-if="categories.length"
             v-model="drawerOpen"
-            :permanent="!mobile"
+            id="collection-categories-panel"
+            :width="256"
             :temporary="mobile"
+            disable-resize-watcher
             class="category-drawer"
         >
+            <div class="px-3 py-2">
+                <h2 class="text-h6 ma-0">{{ t('categories.title') }}</h2>
+            </div>
+            <v-divider />
             <v-list nav :aria-label="t('categories.navigation')">
                 <v-list-item prepend-icon="mdi-view-grid" :title="t('categories.all')"
                     :active="selectedCategoryId === null" @click="selectCategory(null)" />
@@ -16,9 +22,20 @@
                     @select="selectCategory" />
             </v-list>
         </v-navigation-drawer>
-        <v-btn v-if="categories.length && mobile" class="category-drawer-toggle" icon="mdi-folder-outline"
-            color="primary" :aria-label="t('categories.openNavigation')" @click="drawerOpen = true" />
+        <v-btn
+            v-if="categories.length"
+            class="category-drawer-toggle"
+            :class="{ 'category-drawer-toggle--open': drawerOpen }"
+            :icon="drawerOpen ? 'mdi-chevron-left' : 'mdi-chevron-right'"
+            color="surface"
+            variant="elevated"
+            :aria-label="t(drawerOpen ? 'categories.hideNavigation' : 'categories.openNavigation')"
+            :aria-expanded="drawerOpen"
+            aria-controls="collection-categories-panel"
+            @click="drawerOpen = !drawerOpen"
+        />
         <CollectionFilters
+            v-model="filtersOpen"
             v-if="collection.length"
             v-model:artist="filters.artist.value"
             v-model:album="filters.album.value"
@@ -136,6 +153,7 @@ const detailDialogOpen = ref(false);
 const cardSize = ref<CardSizePreference>(DEFAULT_USER_PREFERENCES.cardSize);
 const userLoggedIn = computed(() => discordService.user.value !== null);
 const { mobile } = useDisplay();
+const filtersOpen = ref(!mobile.value);
 const drawerOpen = ref(false);
 const selectedCategoryId = ref<number | null>(null);
 const categoryTree = computed(() => buildCategoryTree(categories.value));
@@ -189,8 +207,23 @@ onMounted(async () => {
     min-height: calc(100vh - 64px);
     padding-top: clamp(48px, 10vw, 120px);
 }
-.category-drawer { overflow-y: auto; }
-.category-drawer-toggle { position: fixed; left: 16px; top: 80px; z-index: 1005; }
+.category-drawer { overflow-y: auto; max-width: calc(100vw - 48px); }
+.category-drawer-toggle {
+    position: fixed;
+    top: 50%;
+    left: 0;
+    z-index: 1016;
+    width: 32px;
+    height: 56px;
+    border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+    border-radius: 0 8px 8px 0;
+    transform: translateY(-50%);
+    transition: left .2s cubic-bezier(.4, 0, .2, 1);
+}
+.category-drawer-toggle--open {
+    left: calc(min(256px, calc(100vw - 48px)) - 16px);
+    border-radius: 8px;
+}
 .collection-heading {
     display: flex;
     align-items: center;
@@ -214,12 +247,6 @@ onMounted(async () => {
     align-items: center;
     gap: 12px;
     flex-shrink: 0;
-}
-
-@media (min-width: 600px) {
-    .collection-heading {
-        padding-inline-end: 72px;
-    }
 }
 
 @media (min-width: 600px) and (max-width: 959.98px) {

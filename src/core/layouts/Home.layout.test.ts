@@ -42,7 +42,8 @@ describe('home collection search', () => {
                     VRow: { template: '<div><slot /></div>' },
                     VCol: { template: '<div><slot /></div>' },
                     VBtnToggle: { template: '<div><slot /></div>' },
-                    VBtn: true, VEmptyState: true, VList: true, VListItem: true, VNavigationDrawer: true,
+                    VBadge: { template: '<div><slot /></div>' },
+                    VBtn: true, VEmptyState: true, VList: true, VListItem: true, VDivider: true, VNavigationDrawer: true,
                 },
             },
         });

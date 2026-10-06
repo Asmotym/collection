@@ -75,6 +75,7 @@
     "filters": {
       "title": "Filters",
       "open": "Open filters",
+      "hide": "Hide filters",
       "clear": "Clear filters",
       "activeCount": "Active filters: {count}",
       "general": "General",
@@ -214,7 +215,9 @@
     }
   },
   "categories": {
+    "title": "Categories",
     "all": "All", "navigation": "Collection categories", "openNavigation": "Open categories",
+    "hideNavigation": "Hide categories",
     "description": "Create and arrange categories for your collection.", "addRoot": "Add category", "addChild": "Add child category",
     "emptyTitle": "No categories yet", "emptyText": "Create your first category to organize your collection.",
     "createTitle": "Create category", "editTitle": "Edit category", "name": "Name", "parent": "Parent category", "noParent": "No parent",
