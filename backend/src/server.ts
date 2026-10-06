@@ -7,27 +7,29 @@ import { getDiscordUser } from './discord.js';
 import { isPostgresUniqueViolation } from './database-errors.js';
 import { categoryDepth, categoryDescendantIds, categorySubtreeHeight } from './category-tree.js';
 import type { DiscordAuth } from '../../shared/types/discord.types.js';
-import type {
-    CreateAlbumPayload,
-    CreateArtistPayload,
-    ComposeCollectionPayload,
-    ComposeCollectionResult,
-    CreateCollectionPayload,
-    CollectionMetadata,
-    CollectionReleaseSelection,
-    DatabaseAlbum,
-    DatabaseArtist,
-    DatabaseCategory,
-    DatabaseCollectionItem,
-    DatabaseUser,
-    MusicBrainzArtist,
-    MusicBrainzReleaseGroup,
-    UpdateAlbumPayload,
-    UpdateArtistPayload,
-    UpdateCollectionPayload,
-    CreateCategoryPayload,
-    UpdateCategoryPayload,
-    MoveCategoryPayload,
+import {
+    DEFAULT_USER_PREFERENCES,
+    type CreateAlbumPayload,
+    type CreateArtistPayload,
+    type ComposeCollectionPayload,
+    type ComposeCollectionResult,
+    type CreateCollectionPayload,
+    type CollectionMetadata,
+    type CollectionReleaseSelection,
+    type DatabaseAlbum,
+    type DatabaseArtist,
+    type DatabaseCategory,
+    type DatabaseCollectionItem,
+    type DatabaseUser,
+    type MusicBrainzArtist,
+    type MusicBrainzReleaseGroup,
+    type UpdateAlbumPayload,
+    type UpdateArtistPayload,
+    type UpdateCollectionPayload,
+    type CreateCategoryPayload,
+    type UpdateCategoryPayload,
+    type MoveCategoryPayload,
+    type UserPreferences,
 } from '../../shared/types/database.types.js';
 import type {
     CatalogCoverReference,
@@ -97,6 +99,27 @@ await app.register(cors, {
 await pool.query(`
     ALTER TABLE users
     ADD COLUMN IF NOT EXISTS rights TEXT NOT NULL DEFAULT 'user'
+`);
+
+await pool.query(`
+    ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS preferences JSONB NOT NULL DEFAULT '{"cardSize":"large"}'::jsonb
+`);
+
+await pool.query(`
+    DO $$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT 1
+            FROM pg_constraint
+            WHERE conname = 'users_preferences_card_size_check'
+        ) THEN
+            ALTER TABLE users
+            ADD CONSTRAINT users_preferences_card_size_check
+            CHECK (preferences->>'cardSize' IN ('large', 'medium', 'small'));
+        END IF;
+    END
+    $$;
 `);
 
 await pool.query(`
@@ -528,6 +551,17 @@ function normalizeAlbumMusicBrainzReleaseData(
         throw new Error('MusicBrainz release does not belong to the selected album');
     }
     return value;
+}
+
+function normalizeUserPreferences(value: unknown): UserPreferences {
+    const raw = value && typeof value === 'object' && !Array.isArray(value)
+        ? value as Record<string, unknown>
+        : {};
+    const cardSize = raw.cardSize;
+    if (cardSize !== 'large' && cardSize !== 'medium' && cardSize !== 'small') {
+        throw new Error('Card size must be large, medium, or small');
+    }
+    return { cardSize };
 }
 
 function normalizeSearchQuery(value: unknown): string {
@@ -1988,6 +2022,50 @@ app.delete('/api/collection/:id', async (request, reply) => {
     };
 });
 
+app.patch('/api/users/:id/preferences', async (request, reply) => {
+    const userId = (request.params as { id: string }).id?.trim();
+    if (!userId) {
+        reply.code(400);
+        return { error: 'User id is required' };
+    }
+
+    let preferences: UserPreferences;
+    try {
+        preferences = normalizeUserPreferences(request.body);
+    } catch (error) {
+        reply.code(400);
+        return { error: error instanceof Error ? error.message : 'Invalid user preferences' };
+    }
+
+    const result = await pool.query<DatabaseUser>(
+        `
+            UPDATE users
+            SET preferences = COALESCE(preferences, '{}'::jsonb) || $2::jsonb
+            WHERE discord_user_id = $1
+            RETURNING discord_user_id, username, avatar, rights, preferences
+        `,
+        [userId, JSON.stringify(preferences)],
+    );
+
+    if (!result.rows[0]) {
+        reply.code(404);
+        return { error: 'User not found' };
+    }
+
+    const user = result.rows[0];
+    return {
+        success: true,
+        data: {
+            id: user.discord_user_id,
+            username: user.username,
+            avatar: user.avatar,
+            rights: user.rights,
+            preferences: user.preferences ?? DEFAULT_USER_PREFERENCES,
+        },
+        queryType: 'user',
+    };
+});
+
 app.post('/api/discord', async (request, reply) => {
     const body = request.body as DiscordAuth & { queryType?: string };
     const queryType = body.queryType || 'user';
@@ -2008,7 +2086,7 @@ app.post('/api/discord', async (request, reply) => {
                 DO UPDATE SET
                     username = EXCLUDED.username,
                     avatar = EXCLUDED.avatar
-                RETURNING discord_user_id, username, avatar, rights
+                RETURNING discord_user_id, username, avatar, rights, preferences
             `,
             [discordUser.id, discordUser.username, discordUser.avatar],
         );
@@ -2021,6 +2099,7 @@ app.post('/api/discord', async (request, reply) => {
                 username: user.username,
                 avatar: user.avatar,
                 rights: user.rights,
+                preferences: user.preferences ?? DEFAULT_USER_PREFERENCES,
             },
             queryType,
         };

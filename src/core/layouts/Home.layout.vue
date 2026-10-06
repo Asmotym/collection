@@ -94,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useDisplay } from 'vuetify';
 import { useI18n } from 'vue-i18n';
 import HeaderComponent from 'core/components/Header.component.vue';
@@ -107,7 +107,7 @@ import CategoryNavigationList from 'core/components/CategoryNavigationList.compo
 import { buildCategoryTree, descendantCategoryIds } from 'core/utils/category-tree.utils';
 import { useCollectionFilters } from 'core/composables/useCollectionFilters';
 import type { CollectionItem } from 'core/store/stores/collection.store';
-import type { DatabaseCategory } from '../../../shared/types/database.types';
+import { DEFAULT_USER_PREFERENCES, type CardSizePreference, type DatabaseCategory } from '../../../shared/types/database.types';
 import { store } from 'core/store/index.store';
 import { DiscordService } from 'modules/discord-auth/services/discord.service';
 
@@ -121,7 +121,7 @@ const authReady = ref(false);
 const collectionLoading = ref(false);
 const selectedItem = ref<CollectionItem | null>(null);
 const detailDialogOpen = ref(false);
-const cardSize = ref<'large' | 'medium' | 'small'>('large');
+const cardSize = ref<CardSizePreference>(DEFAULT_USER_PREFERENCES.cardSize);
 const userLoggedIn = computed(() => discordService.user.value !== null);
 const { mobile } = useDisplay();
 const drawerOpen = ref(false);
@@ -145,11 +145,18 @@ function openDetails(item: CollectionItem) {
     detailDialogOpen.value = true;
 }
 
+watch(cardSize, async (size) => {
+    const user = discordService.user.value;
+    if (!user || user.preferences.cardSize === size) return;
+    await discordService.updatePreferences({ cardSize: size });
+});
+
 onMounted(async () => {
     try {
         const user = await discordService.handleLogin();
         authReady.value = true;
         if (user) {
+            cardSize.value = user.preferences?.cardSize ?? DEFAULT_USER_PREFERENCES.cardSize;
             collectionLoading.value = true;
             [collection.value, categories.value] = await Promise.all([
                 collectionStore.getAll(user.id), categoryStore.getAll(user.id),

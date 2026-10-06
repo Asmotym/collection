@@ -7,6 +7,16 @@ import type {
 
 export type UserRights = 'user' | 'admin';
 
+export type CardSizePreference = 'large' | 'medium' | 'small';
+
+export interface UserPreferences {
+    cardSize: CardSizePreference;
+}
+
+export const DEFAULT_USER_PREFERENCES: UserPreferences = {
+    cardSize: 'large',
+};
+
 export interface MusicBrainzArea {
     id?: string;
     name?: string;
@@ -171,6 +181,7 @@ export interface DatabaseUser {
     username: string;
     avatar: string | null;
     rights: UserRights;
+    preferences: UserPreferences;
     rights_update?: boolean;
     rights_testing_ground?: boolean;
 }

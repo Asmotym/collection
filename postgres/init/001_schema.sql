@@ -30,7 +30,9 @@ CREATE TABLE IF NOT EXISTS users (
     discord_user_id TEXT PRIMARY KEY,
     username TEXT NOT NULL,
     avatar TEXT,
-    rights TEXT NOT NULL DEFAULT 'user' CHECK (rights IN ('user', 'admin'))
+    rights TEXT NOT NULL DEFAULT 'user' CHECK (rights IN ('user', 'admin')),
+    preferences JSONB NOT NULL DEFAULT '{"cardSize":"large"}'::jsonb
+        CHECK (preferences->>'cardSize' IN ('large', 'medium', 'small'))
 );
 
 CREATE TABLE IF NOT EXISTS collection (

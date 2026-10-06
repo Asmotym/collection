@@ -1,5 +1,7 @@
 import type { DiscordAuth, DiscordUser } from "../../../../shared/types/discord.types";
+import { DEFAULT_USER_PREFERENCES, type UserPreferences } from "../../../../shared/types/database.types";
 import { getApiUrl, getRedirectUri } from "modules/discord-auth/utils/urls.utils";
+import { api } from "api/api";
 import { ref, type Ref } from 'vue';
 
 export class DiscordService {
@@ -94,6 +96,17 @@ export class DiscordService {
         }
     }
 
+    public async updatePreferences(preferences: UserPreferences): Promise<DiscordUser> {
+        const user = this.user.value;
+        if (!user) {
+            throw new Error('[DiscordAuth] Cannot update preferences while signed out');
+        }
+
+        const updatedUser = await api.user.updatePreferences(user.id, preferences);
+        this.storeUser(updatedUser);
+        return updatedUser;
+    }
+
     public async fetchUserInfo(auth: DiscordAuth): Promise<DiscordUser> {
         const userInfo = await fetch(getApiUrl('/discord'), {
             method: 'POST',
@@ -121,8 +134,13 @@ export class DiscordService {
     }
 
     protected storeUser(user: DiscordUser) {
-        localStorage.setItem('discord_user', JSON.stringify(user));
-        this.user.value = user;
+        const normalizedUser: DiscordUser = {
+            ...user,
+            rights: user.rights ?? 'user',
+            preferences: user.preferences ?? DEFAULT_USER_PREFERENCES,
+        };
+        localStorage.setItem('discord_user', JSON.stringify(normalizedUser));
+        this.user.value = normalizedUser;
     }
 
     protected storeAuth(auth: DiscordAuth) {
@@ -149,7 +167,13 @@ export class DiscordService {
     public getUser(): DiscordUser | null {
         const user = localStorage.getItem('discord_user');
         const parsedUser = user ? JSON.parse(user) as DiscordUser : null;
-        return parsedUser ? { ...parsedUser, rights: parsedUser.rights ?? 'user' } : null;
+        return parsedUser
+            ? {
+                ...parsedUser,
+                rights: parsedUser.rights ?? 'user',
+                preferences: parsedUser.preferences ?? DEFAULT_USER_PREFERENCES,
+            }
+            : null;
     }
 
     public isLoggedIn(): boolean {
