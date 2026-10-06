@@ -35,11 +35,59 @@ describe('category-scoped collection filters', () => {
         const scoped = computed(() => selected.value === null ? collection.value
             : collection.value.filter((entry) => entry.category_ids.includes(selected.value!)));
         const filters = useCollectionFilters(scoped);
-        filters.artist.value = 'One';
+        filters.artist.value = ['One'];
         selected.value = 1;
         filters.clear();
-        expect(filters.artist.value).toBeNull();
+        expect(filters.artist.value).toEqual([]);
         expect(filters.options.value.artists).toEqual(['Two']);
         expect(filters.filtered.value.map((entry) => entry.id)).toEqual([2]);
+    });
+
+    it('matches any selected artist and combines with other filters', () => {
+        const collection = ref([item(1, 'One', []), item(2, 'Two', []), item(3, 'Three', [])]);
+        const filters = useCollectionFilters(collection);
+        expect(filters.activeCount.value).toBe(0);
+        filters.artist.value = ['One', 'Two'];
+        expect(filters.filtered.value.map((entry) => entry.id)).toEqual([1, 2]);
+        expect(filters.activeCount.value).toBe(1);
+
+        filters.year.value = [2002];
+        expect(filters.filtered.value.map((entry) => entry.id)).toEqual([2]);
+        expect(filters.activeCount.value).toBe(2);
+
+        filters.clear();
+        expect(filters.filtered.value).toEqual(collection.value);
+        expect(filters.activeCount.value).toBe(0);
+    });
+
+    it('matches multiple albums and years, and restores results when selections are cleared', () => {
+        const collection = ref([
+            item(1, 'One', []), item(2, 'Two', []), item(3, 'Three', []),
+            { ...item(4, 'Four', []), album_year: null },
+        ]);
+        const filters = useCollectionFilters(collection);
+        filters.album.value = ['Album 1', 'Album 2'];
+        expect(filters.filtered.value.map((entry) => entry.id)).toEqual([1, 2]);
+        expect(filters.activeCount.value).toBe(1);
+
+        filters.year.value = [2002, 2003];
+        expect(filters.filtered.value.map((entry) => entry.id)).toEqual([2]);
+        expect(filters.activeCount.value).toBe(2);
+
+        filters.album.value = [];
+        expect(filters.filtered.value.map((entry) => entry.id)).toEqual([2, 3]);
+        expect(filters.activeCount.value).toBe(1);
+
+        filters.year.value = [];
+        expect(filters.filtered.value).toEqual(collection.value);
+        expect(filters.activeCount.value).toBe(0);
+
+        filters.album.value = ['Album 1', 'Album 2'];
+        filters.year.value = [2001, 2002];
+        filters.clear();
+        expect(filters.album.value).toEqual([]);
+        expect(filters.year.value).toEqual([]);
+        expect(filters.filtered.value).toEqual(collection.value);
+        expect(filters.activeCount.value).toBe(0);
     });
 });

@@ -14,9 +14,9 @@
         </div>
         <v-divider />
         <div class="pa-4">
-            <v-autocomplete :model-value="artist" :items="artists" :label="t('home.filters.artist')" :no-data-text="t('home.filters.noOptions')" clearable hide-details class="mb-4" @update:model-value="emit('update:artist', $event)" />
-            <v-autocomplete :model-value="album" :items="albums" :label="t('home.filters.album')" :no-data-text="t('home.filters.noOptions')" clearable hide-details class="mb-4" @update:model-value="emit('update:album', $event)" />
-            <v-autocomplete :model-value="year" :items="years" :label="t('home.filters.year')" :no-data-text="t('home.filters.noOptions')" clearable hide-details @update:model-value="emit('update:year', $event)" />
+            <v-autocomplete :model-value="artist" :items="artists" :label="t('home.filters.artist')" :no-data-text="t('home.filters.noOptions')" multiple chips closable-chips clearable hide-details class="mb-4" @update:model-value="emit('update:artist', $event ?? [])" />
+            <v-autocomplete :model-value="album" :items="albums" :label="t('home.filters.album')" :no-data-text="t('home.filters.noOptions')" multiple chips closable-chips clearable hide-details class="mb-4" @update:model-value="emit('update:album', $event ?? [])" />
+            <v-autocomplete :model-value="year" :items="years" :label="t('home.filters.year')" :no-data-text="t('home.filters.noOptions')" multiple chips closable-chips clearable hide-details @update:model-value="emit('update:year', $event ?? [])" />
             <v-btn class="mt-4" color="primary" variant="text" prepend-icon="mdi-filter-remove" :disabled="activeCount === 0" @click="emit('clear')">{{ t('home.filters.clear') }}</v-btn>
         </div>
     </v-navigation-drawer>
@@ -41,18 +41,18 @@ const open = defineModel<boolean>({ required: true });
 const { mobile } = useDisplay();
 
 defineProps<{
-    artist: string | null;
-    album: string | null;
-    year: number | null;
+    artist: string[];
+    album: string[];
+    year: number[];
     artists: string[];
     albums: string[];
     years: number[];
     activeCount: number;
 }>();
 const emit = defineEmits<{
-    'update:artist': [value: string | null];
-    'update:album': [value: string | null];
-    'update:year': [value: number | null];
+    'update:artist': [value: string[]];
+    'update:album': [value: string[]];
+    'update:year': [value: number[]];
     clear: [];
 }>();
 const { t } = useI18n();

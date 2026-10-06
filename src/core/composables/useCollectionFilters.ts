@@ -4,12 +4,12 @@ import type { CollectionItem } from 'core/store/stores/collection.store';
 
 export function useCollectionFilters(collection: Ref<CollectionItem[]>) {
     const search = ref<string | null>('');
-    const artist = ref<string | null>(null);
-    const album = ref<string | null>(null);
-    const year = ref<number | null>(null);
+    const artist = ref<string[]>([]);
+    const album = ref<string[]>([]);
+    const year = ref<number[]>([]);
 
-    const activeCount = computed(() => [search.value?.trim(), artist.value, album.value, year.value]
-        .filter((value) => value !== null && value !== undefined && value !== '').length);
+    const activeCount = computed(() => [search.value?.trim(), artist.value.length, album.value.length, year.value.length]
+        .filter(Boolean).length);
     const options = computed(() => ({
         artists: uniqueSorted(collection.value.map((item) => item.artist_name)),
         albums: uniqueSorted(collection.value.map((item) => item.album_name)),
@@ -21,17 +21,17 @@ export function useCollectionFilters(collection: Ref<CollectionItem[]>) {
         return collection.value.filter((item) => (
             (!query || [item.artist_name, item.album_name, item.album_year]
                 .some((value) => String(value ?? '').toLocaleLowerCase().includes(query)))
-            && (!artist.value || item.artist_name === artist.value)
-            && (!album.value || item.album_name === album.value)
-            && (year.value === null || item.album_year === year.value)
+            && (!artist.value.length || artist.value.includes(item.artist_name))
+            && (!album.value.length || album.value.includes(item.album_name))
+            && (!year.value.length || (item.album_year !== null && year.value.includes(item.album_year)))
         ));
     });
 
     function clear() {
         search.value = '';
-        artist.value = null;
-        album.value = null;
-        year.value = null;
+        artist.value = [];
+        album.value = [];
+        year.value = [];
     }
 
     return { search, artist, album, year, activeCount, options, filtered, clear };
