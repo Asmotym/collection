@@ -1,15 +1,16 @@
 COMPOSE := docker compose
 COMPOSE_WATCH := docker compose -f docker-compose.watch.yml
+COMPOSE_RUN := $(COMPOSE_WATCH) run --rm --no-deps --build -T
 
 .PHONY: help install build frontend-build backend-build up watch watch-down start rebuild stop down destroy restart logs ps health collection db-ui dev-health dev-collection dev-db-ui clean
 
 help:
 	@printf '%s\n' \
 		'Available commands:' \
-		'  make install         Refresh local and Docker frontend/backend dependencies' \
-		'  make build           Build frontend and backend locally' \
-		'  make frontend-build  Build the Vite frontend locally' \
-		'  make backend-build   Build the Fastify backend locally' \
+		'  make install         Install frontend/backend dependencies inside Docker' \
+		'  make build           Build frontend and backend inside Docker' \
+		'  make frontend-build  Build the Vite frontend inside Docker' \
+		'  make backend-build   Build the Fastify backend inside Docker' \
 		'  make up              Build and start Docker services in the background' \
 		'  make watch           Run the Docker dev stack in watch mode' \
 		'  make watch-down      Stop and remove the Docker dev stack' \
@@ -27,22 +28,19 @@ help:
 		'  make dev-health      Check backend health through Vite dev proxy' \
 		'  make dev-collection  Check collection API through Vite dev proxy' \
 		'  make dev-db-ui       Print the dev database web interface URL' \
-		'  make clean           Remove local build output'
+		'  make clean           Remove build output through Docker'
 
 install:
-	npm install
-	npm install --prefix backend
-	$(COMPOSE_WATCH) build frontend backend
-	$(COMPOSE_WATCH) run --rm --no-deps frontend npm ci
-	$(COMPOSE_WATCH) run --rm --no-deps backend npm ci --prefix backend
+	$(COMPOSE_RUN) frontend npm install
+	$(COMPOSE_RUN) backend npm install --prefix backend
 
 build: frontend-build backend-build
 
 frontend-build:
-	npm run build
+	$(COMPOSE_RUN) frontend npm run build
 
 backend-build:
-	npm run build --prefix backend
+	$(COMPOSE_RUN) backend npm run build --prefix backend
 
 up:
 	$(COMPOSE) up --build -d
@@ -78,22 +76,22 @@ ps:
 	$(COMPOSE) ps
 
 health:
-	curl -sS http://localhost:8080/health
+	$(COMPOSE) exec -T frontend wget -qO- http://127.0.0.1/health
 
 collection:
-	curl -sS http://localhost:8080/api/collection
+	$(COMPOSE) exec -T frontend wget -qO- http://127.0.0.1/api/collection
 
 db-ui:
 	@printf '%s\n' 'Adminer: http://localhost:8081'
 	@printf '%s\n' 'System: PostgreSQL | Server: postgres | Username: collection | Password: collection | Database: collection'
 
 dev-health:
-	curl -sS http://localhost:5173/health
+	$(COMPOSE_WATCH) exec -T frontend wget -qO- http://127.0.0.1:5173/health
 
 dev-collection:
-	curl -sS http://localhost:5173/api/collection
+	$(COMPOSE_WATCH) exec -T frontend wget -qO- http://127.0.0.1:5173/api/collection
 
 dev-db-ui: db-ui
 
 clean:
-	rm -rf dist backend/dist
+	$(COMPOSE_RUN) frontend rm -rf dist backend/dist

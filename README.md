@@ -5,8 +5,9 @@ Vue/Vite frontend with a TypeScript Fastify backend and PostgreSQL, designed to 
 ## Requirements
 
 - Docker with Docker Compose
-- Node.js 22 and npm for local builds or development outside Docker
 - `make` for the documented command shortcuts
+
+All Makefile install, build, cleanup, and API check commands run inside Docker containers. Node.js, npm, and curl are not required on the host. Node.js 22 and npm are only needed if you choose to develop outside Docker.
 
 ## Setup
 
@@ -99,7 +100,7 @@ make dev-db-ui       # print database web UI connection details
 make watch-down      # stop and remove the watch-mode containers
 ```
 
-## Local Development
+## Dependencies and Builds in Docker
 
 Install dependencies:
 
@@ -107,12 +108,25 @@ Install dependencies:
 make install
 ```
 
-Run local checks/builds:
+Build the frontend and backend:
 
 ```sh
 make build
 make frontend-build
 make backend-build
+```
+
+These commands use temporary containers from the development images and work without a running stack. Dependencies are stored in Docker volumes; lockfile updates and build output (`dist` and `backend/dist`) are written to the mounted project directory. Run `make install` after changing dependencies to refresh the volumes. Use `make clean` to remove build output through Docker.
+
+For server deployment, `make up` builds and starts the production images, installing dependencies during the image build. Running `make install` or `make build` first is unnecessary. API checks (`make health`, `make collection`, and their `dev-` variants) require the corresponding stack to be running and execute inside its frontend container.
+
+## Development Outside Docker
+
+If you prefer host-side development, install Node.js 22 and npm, then install dependencies locally:
+
+```sh
+npm install
+npm install --prefix backend
 ```
 
 Run frontend and backend development servers separately:
