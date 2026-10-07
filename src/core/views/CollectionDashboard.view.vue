@@ -1,69 +1,65 @@
 <template>
-    <v-container class="py-6">
-        <v-row>
-            <v-col cols="12">
-                <AppSkeleton
-                    v-if="dashboardLoading"
-                    variant="table"
-                    :count="6"
-                    :label="t('common.loading')"
-                />
-                <template v-else>
-                    <v-btn class="mb-4" color="primary" prepend-icon="mdi-plus" @click="showCollectionForm = true">
-                        {{ t('dashboard.actions.addCollection') }}
-                    </v-btn>
-                    <v-table>
-                        <thead>
-                            <tr>
-                                <th>{{ t('dashboard.columns.image') }}</th>
-                                <th>{{ t('dashboard.columns.album') }}</th>
-                                <th>{{ t('dashboard.columns.artist') }}</th>
-                                <th>{{ t('dashboard.columns.year') }}</th>
-                                <th>{{ t('dashboard.columns.release') }}</th>
-                                <th>{{ t('dashboard.columns.details') }}</th>
-                                <th>{{ t('dashboard.columns.createdBy') }}</th>
-                                <th class="text-right">{{ t('dashboard.columns.actions') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="item in collection" :key="item.id">
-                                <td>
-                                    <ImagePreview
-                                        :src="item.album_image"
-                                        :source-url="item.album_image_url"
-                                        :alt="item.album_name"
-                                    />
-                                </td>
-                                <td>{{ item.album_name }}</td>
-                                <td>{{ item.artist_name }}</td>
-                                <td>{{ item.album_year ?? '-' }}</td>
-                                <td>{{ formatCollectionRelease(item.musicbrainz_release_data) }}</td>
-                                <td><CollectionMetadataDisplay :metadata="item.metadata" /></td>
-                                <td>{{ item.created_by_username ?? '-' }}</td>
-                                <td class="text-right text-no-wrap">
-                                    <v-btn
-                                        icon="mdi-pencil"
-                                        variant="text"
-                                        size="small"
-                                        :aria-label="t('dashboard.actions.editCollection')"
-                                        @click="openCollectionEdit(item)"
-                                    />
-                                    <v-btn
-                                        icon="mdi-delete"
-                                        variant="text"
-                                        color="error"
-                                        size="small"
-                                        :loading="deletingCollectionId === item.id"
-                                        :aria-label="t('dashboard.actions.removeCollection')"
-                                        @click="requestCollectionDeletion(item)"
-                                    />
-                                </td>
-                            </tr>
-                        </tbody>
-                    </v-table>
-                </template>
-            </v-col>
-        </v-row>
+    <v-container class="collection-dashboard py-6">
+        <AppSkeleton
+            v-if="dashboardLoading"
+            variant="table"
+            :count="6"
+            :label="t('common.loading')"
+        />
+        <template v-else>
+            <v-btn class="collection-add-button mb-4" color="primary" prepend-icon="mdi-plus" @click="showCollectionForm = true">
+                {{ t('dashboard.actions.addCollection') }}
+            </v-btn>
+            <v-table class="collection-table" height="100%" fixed-header striped="even">
+                <thead>
+                    <tr>
+                        <th>{{ t('dashboard.columns.image') }}</th>
+                        <th>{{ t('dashboard.columns.album') }}</th>
+                        <th>{{ t('dashboard.columns.artist') }}</th>
+                        <th>{{ t('dashboard.columns.year') }}</th>
+                        <th>{{ t('dashboard.columns.release') }}</th>
+                        <th>{{ t('dashboard.columns.details') }}</th>
+                        <th>{{ t('dashboard.columns.createdBy') }}</th>
+                        <th class="text-right">{{ t('dashboard.columns.actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="item in collection" :key="item.id">
+                        <td>
+                            <ImagePreview
+                                :src="item.album_image"
+                                :source-url="item.album_image_url"
+                                :alt="item.album_name"
+                            />
+                        </td>
+                        <td>{{ item.album_name }}</td>
+                        <td>{{ item.artist_name }}</td>
+                        <td>{{ item.album_year ?? '-' }}</td>
+                        <td>{{ formatCollectionRelease(item.musicbrainz_release_data) }}</td>
+                        <td><CollectionMetadataDisplay :metadata="item.metadata" /></td>
+                        <td>{{ item.created_by_username ?? '-' }}</td>
+                        <td class="text-right text-no-wrap">
+                            <v-btn
+                                icon="mdi-pencil"
+                                variant="text"
+                                size="small"
+                                :aria-label="t('dashboard.actions.editCollection')"
+                                @click="openCollectionEdit(item)"
+                            />
+                            <v-btn
+                                icon="mdi-delete"
+                                variant="text"
+                                color="error"
+                                size="small"
+                                :loading="deletingCollectionId === item.id"
+                                :aria-label="t('dashboard.actions.removeCollection')"
+                                @click="requestCollectionDeletion(item)"
+                            />
+                        </td>
+                    </tr>
+                </tbody>
+            </v-table>
+        </template>
     </v-container>
 
     <v-dialog v-model="showCollectionForm" max-width="850" @after-leave="resetCollectionForm">
@@ -1229,6 +1225,16 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.collection-dashboard {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+}
+.collection-add-button { align-self: flex-start; flex-shrink: 0; }
+.collection-table { flex: 1 1 0; min-height: 0; }
+
 .album-select-item {
     display: flex;
     align-items: center;

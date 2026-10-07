@@ -1,3 +1,4 @@
+import { normalizeUserPreferences } from './user-preferences.js';
 import cors from '@fastify/cors';
 import { registerUserAccess, serializeUser } from './user-access.js';
 import Fastify from 'fastify';
@@ -195,6 +196,13 @@ await pool.query(`
 `);
 
 await pool.query(`
+    ALTER TABLE collection ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ;
+    UPDATE collection SET updated_at = created_at WHERE updated_at IS NULL;
+    ALTER TABLE collection ALTER COLUMN updated_at SET DEFAULT NOW();
+    ALTER TABLE collection ALTER COLUMN updated_at SET NOT NULL;
+`);
+
+await pool.query(`
     ALTER TABLE album
     ADD COLUMN IF NOT EXISTS artist_id INTEGER REFERENCES artist(id) ON DELETE CASCADE
 `);
@@ -322,6 +330,8 @@ app.get('/health', async (_request, reply) => {
 const collectionItemQuery = `
     SELECT
         c.id,
+        c.created_at,
+        c.updated_at,
         COALESCE(alb.artist_id, c.artist_id) AS artist_id,
         COALESCE(album_artist.name, art.name) AS artist_name,
         COALESCE(album_artist.image, art.image) AS artist_image,
@@ -556,17 +566,6 @@ function normalizeAlbumMusicBrainzReleaseData(
         throw new Error('MusicBrainz release does not belong to the selected album');
     }
     return value;
-}
-
-function normalizeUserPreferences(value: unknown): UserPreferences {
-    const raw = value && typeof value === 'object' && !Array.isArray(value)
-        ? value as Record<string, unknown>
-        : {};
-    const cardSize = raw.cardSize;
-    if (cardSize !== 'large' && cardSize !== 'medium' && cardSize !== 'small') {
-        throw new Error('Card size must be large, medium, or small');
-    }
-    return { cardSize };
 }
 
 function normalizeSearchQuery(value: unknown): string {
@@ -1950,7 +1949,8 @@ app.patch('/api/collection/:id', async (request, reply) => {
         const updateResult = await client.query<{ id: number }>(
             `
                 UPDATE collection
-                SET metadata = $2::jsonb,
+                SET updated_at = NOW(),
+                    metadata = $2::jsonb,
                     musicbrainz_release_data = $3::jsonb
                 WHERE id = $1 AND created_by_user_id = $4
                 RETURNING id
@@ -2025,7 +2025,7 @@ app.patch('/api/users/:id/preferences', async (request, reply) => {
         return { error: 'User id is required' };
     }
 
-    let preferences: UserPreferences;
+    let preferences: Partial<UserPreferences>;
     try {
         preferences = normalizeUserPreferences(request.body);
     } catch (error) {

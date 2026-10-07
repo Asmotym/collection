@@ -72,6 +72,15 @@
       "open": "Abrir los detalles de {name}",
       "close": "Cerrar los detalles del elemento de la colección"
     },
+    "sort": {
+      "label": "Ordenar por",
+      "added": "Añadido",
+      "edited": "Editado",
+      "releaseDate": "Fecha de lanzamiento",
+      "alphabetic": "Alfabético",
+      "asc": "Ascendente",
+      "desc": "Descendente"
+    },
     "filters": {
       "title": "Filtros",
       "open": "Abrir filtros",

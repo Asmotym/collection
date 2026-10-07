@@ -72,6 +72,15 @@
       "open": "Open details for {name}",
       "close": "Close collection item details"
     },
+    "sort": {
+      "label": "Sort by",
+      "added": "Added",
+      "edited": "Edited",
+      "releaseDate": "Release Date",
+      "alphabetic": "Alphabetic",
+      "asc": "Ascending",
+      "desc": "Descending"
+    },
     "filters": {
       "title": "Filters",
       "open": "Open filters",

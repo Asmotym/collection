@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS collection (
     album_id INTEGER NOT NULL REFERENCES album(id) ON DELETE CASCADE,
     created_by_user_id TEXT REFERENCES users(discord_user_id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     metadata JSONB NOT NULL DEFAULT '[]'::jsonb,
     musicbrainz_release_data JSONB,
     UNIQUE (album_id, created_by_user_id)

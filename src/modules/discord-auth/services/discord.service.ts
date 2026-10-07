@@ -97,7 +97,7 @@ export class DiscordService {
         }
     }
 
-    public async updatePreferences(preferences: UserPreferences): Promise<DiscordUser> {
+    public async updatePreferences(preferences: Partial<UserPreferences>): Promise<DiscordUser> {
         const user = this.user.value;
         if (!user) {
             throw new Error('[DiscordAuth] Cannot update preferences while signed out');
@@ -141,7 +141,7 @@ export class DiscordService {
             customUsername: user.customUsername ?? null,
             collectionShared: user.collectionShared ?? false,
             rights: user.rights ?? 'user',
-            preferences: user.preferences ?? DEFAULT_USER_PREFERENCES,
+            preferences: { ...DEFAULT_USER_PREFERENCES, ...user.preferences },
         };
         localStorage.setItem('discord_user', JSON.stringify(normalizedUser));
         this.user.value = normalizedUser;
@@ -175,7 +175,7 @@ export class DiscordService {
             ? {
                 ...parsedUser,
                 rights: parsedUser.rights ?? 'user',
-                preferences: parsedUser.preferences ?? DEFAULT_USER_PREFERENCES,
+                preferences: { ...DEFAULT_USER_PREFERENCES, ...parsedUser.preferences },
             }
             : null;
     }

@@ -8,7 +8,7 @@ export function serializeUser(user: DatabaseUser) {
         id: user.discord_user_id, username: user.custom_username ?? user.username,
         originalUsername: user.username, customUsername: user.custom_username ?? null,
         collectionShared: user.collection_shared ?? false, avatar: user.avatar,
-        rights: user.rights, preferences: user.preferences ?? DEFAULT_USER_PREFERENCES,
+        rights: user.rights, preferences: { ...DEFAULT_USER_PREFERENCES, ...user.preferences },
     };
 }
 

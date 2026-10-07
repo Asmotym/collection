@@ -7,7 +7,7 @@ import type { DatabaseUser } from '../../shared/types/database.types.js';
 
 function setup() {
     const owner: DatabaseUser = { discord_user_id: 'owner', username: 'Discord Name', custom_username: null,
-        collection_shared: false, avatar: '', rights: 'user', preferences: { cardSize: 'large' } };
+        collection_shared: false, avatar: '', rights: 'user', preferences: { cardSize: 'large', sortBy: 'added-asc' } };
     const app = Fastify();
     const query = async (sql: string, values: unknown[] = []) => {
         if (sql.includes('FROM users')) return { rows: values[0] === 'owner' ? [owner] : [] };

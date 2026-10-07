@@ -48,17 +48,36 @@
             <div class="collection-heading mb-4">
                 <h1 class="text-h4">{{ title }}</h1>
                 <div v-if="collection.length" class="collection-toolbar">
-                    <v-text-field
-                        v-model="search"
-                        :label="t('home.filters.search')"
-                        :placeholder="t('home.filters.searchPlaceholder')"
-                        prepend-inner-icon="mdi-magnify"
-                        variant="outlined"
-                        density="compact"
-                        clearable
-                        hide-details
-                        class="collection-search"
-                    />
+                    <div class="collection-search-sort">
+                        <v-text-field
+                            v-model="search"
+                            :label="t('home.filters.search')"
+                            :placeholder="t('home.filters.searchPlaceholder')"
+                            prepend-inner-icon="mdi-magnify"
+                            variant="outlined"
+                            density="compact"
+                            clearable
+                            hide-details
+                            class="collection-search"
+                        />
+                        <v-select
+                            v-model="filters.sort.value"
+                            :items="sortOptions"
+                            :label="t('home.sort.label')"
+                            variant="outlined"
+                            density="compact"
+                            hide-details
+                            class="collection-sort"
+                        >
+                            <template #selection="{ item }">
+                                <v-icon :icon="item.icon" size="small" class="mr-1" aria-hidden="true" />
+                                <span>{{ item.label }}</span>
+                            </template>
+                            <template #item="{ props: itemProps, item }">
+                                <v-list-item v-bind="itemProps" :prepend-icon="item.icon" :aria-label="item.accessibleLabel" />
+                            </template>
+                        </v-select>
+                    </div>
                     <div class="collection-size-control">
                         <span class="text-body-2 text-medium-emphasis">{{ t('home.viewSize.label') }}</span>
                         <v-btn-toggle
@@ -82,6 +101,7 @@
                 v-else-if="filters.filtered.value.length"
                 class="collection-grid"
                 :class="`collection-grid--${cardSize}`"
+                justify="center"
             >
                 <v-col
                     v-for="item in filters.filtered.value"
@@ -127,7 +147,7 @@ import CategoryNavigationList from 'core/components/CategoryNavigationList.compo
 import { buildCategoryTree, descendantCategoryIds } from 'core/utils/category-tree.utils';
 import { useCollectionFilters } from 'core/composables/useCollectionFilters';
 import type { CollectionItem } from 'core/store/stores/collection.store';
-import { DEFAULT_USER_PREFERENCES, type CardSizePreference, type DatabaseCategory } from '../../../shared/types/database.types';
+import { DEFAULT_USER_PREFERENCES, isCollectionSort, type CardSizePreference, type DatabaseCategory } from '../../../shared/types/database.types';
 import { DiscordService } from 'modules/discord-auth/services/discord.service';
 
 const { t } = useI18n();
@@ -153,6 +173,15 @@ const categoryScopedCollection = computed(() => {
 });
 const filters = useCollectionFilters(categoryScopedCollection);
 const { search } = filters;
+const sortOptions = computed(() => ['added', 'edited', 'releaseDate', 'alphabetic'].flatMap((field) =>
+    ['asc', 'desc'].map((direction) => ({
+        value: `${field}-${direction}`,
+        label: t(`home.sort.${field}`),
+        title: t(`home.sort.${field}`),
+        accessibleLabel: `${t(`home.sort.${field}`)} — ${t(`home.sort.${direction}`)}`,
+        icon: direction === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down',
+    })),
+));
 
 function selectCategory(id: number | null) {
     selectedCategoryId.value = id;
@@ -169,6 +198,19 @@ watch(() => discordService.user.value?.preferences.cardSize, (size) => {
     const saved = localStorage.getItem('collection_card_size');
     cardSize.value = size ?? (saved === 'small' || saved === 'medium' ? saved : 'large');
 }, { immediate: true });
+watch([() => discordService.user.value?.id, () => discordService.user.value?.preferences.sortBy], ([, sortBy]) => {
+    const saved = localStorage.getItem('collection_sort_by');
+    filters.sort.value = discordService.user.value
+        ? sortBy ?? DEFAULT_USER_PREFERENCES.sortBy
+        : isCollectionSort(saved) ? saved : DEFAULT_USER_PREFERENCES.sortBy;
+}, { immediate: true });
+watch(filters.sort, async (sortBy) => {
+    const user = discordService.user.value;
+    if (!user) { localStorage.setItem('collection_sort_by', sortBy); return; }
+    if ((user.preferences.sortBy ?? DEFAULT_USER_PREFERENCES.sortBy) === sortBy) return;
+    try { await discordService.updatePreferences({ sortBy }); }
+    catch { /* Keep the selected sort for this visit when persistence fails. */ }
+});
 watch(cardSize, async (size) => {
     const user = discordService.user.value;
     if (!user) { localStorage.setItem('collection_card_size', size); return; }
@@ -210,6 +252,17 @@ watch(cardSize, async (size) => {
     gap: 16px;
     flex-wrap: wrap;
 }
+.collection-search-sort {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1 1 440px;
+    min-width: 0;
+}
+.collection-sort {
+    flex: 0 0 175px;
+    min-width: 0;
+}
 .collection-search {
     flex: 1 1 240px;
     min-width: 0;
@@ -248,6 +301,8 @@ watch(cardSize, async (size) => {
 }
 
 @media (max-width: 599.98px) {
+    .collection-search-sort { gap: 8px; }
+    .collection-sort { flex-basis: 145px; }
     .collection-size-control {
         display: none;
     }

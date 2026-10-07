@@ -9,12 +9,20 @@ export type UserRights = 'user' | 'admin';
 
 export type CardSizePreference = 'large' | 'medium' | 'small';
 
+export type CollectionSort = `${'added' | 'edited' | 'releaseDate' | 'alphabetic'}-${'asc' | 'desc'}`;
+
+export function isCollectionSort(value: unknown): value is CollectionSort {
+    return typeof value === 'string' && /^(added|edited|releaseDate|alphabetic)-(asc|desc)$/.test(value);
+}
+
 export interface UserPreferences {
     cardSize: CardSizePreference;
+    sortBy: CollectionSort;
 }
 
 export const DEFAULT_USER_PREFERENCES: UserPreferences = {
     cardSize: 'large',
+    sortBy: 'added-asc',
 };
 
 export interface MusicBrainzArea {
@@ -145,6 +153,7 @@ export interface DatabaseCollection {
     album_id: number;
     created_by_user_id: string | null;
     created_at: string;
+    updated_at: string;
     metadata: CollectionMetadata[];
     musicbrainz_release_data: CollectionReleaseSelection | null;
     category_ids: number[];
@@ -190,6 +199,8 @@ export interface DatabaseUser {
 
 export interface DatabaseCollectionItem {
     id: number;
+    created_at: string;
+    updated_at: string;
     album_id: number;
     album_name: string;
     album_image: string | null;

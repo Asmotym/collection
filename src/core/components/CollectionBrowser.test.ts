@@ -31,7 +31,7 @@ function mountBrowser() {
         plugins: [createVuetify(), createI18n({ legacy: false, locale: 'en', messages: { en } })],
         renderStubDefaultSlot: true,
         stubs: { VNavigationDrawer: true, VBtn: true, VDivider: true, VList: true, VListItem: true,
-            VContainer: true, VTextField: true, VBtnToggle: true, VRow: true, VCol: true, VAlert: true, VEmptyState: true },
+            VContainer: true, VTextField: true, VSelect: true, VBtnToggle: true, VRow: true, VCol: true, VAlert: true, VEmptyState: true },
     } });
 }
 it('offers category descendants, filters and details to anonymous visitors', async () => {
@@ -59,5 +59,47 @@ it('stores guest card size locally and uses the viewer preferences when signed i
     expect(wrapper.findComponent({ name: 'VBtnToggle' }).attributes('modelvalue')).toBe('medium');
     wrapper.findComponent({ name: 'VBtnToggle' }).vm.$emit('update:modelValue', 'large');
     await flushPromises(); expect(mocks.service.updatePreferences).toHaveBeenCalledWith({ cardSize: 'large' });
+    wrapper.unmount();
+});
+
+it('offers a sort selector and reorders the displayed cards', async () => {
+    const wrapper = mountBrowser();
+    const selector = wrapper.findComponent({ name: 'VSelect' });
+    expect(selector.attributes('label')).toBe('Sort by');
+    selector.vm.$emit('update:modelValue', 'alphabetic-desc');
+    await flushPromises();
+    expect(wrapper.findAllComponents({ name: 'CollectionCard' }).map((card) => card.props('item').id))
+        .toEqual([2, 1]);
+    wrapper.unmount();
+});
+
+it('restores and saves guest sorting across visits, ignoring invalid stored values', async () => {
+    localStorage.setItem('collection_sort_by', 'invalid');
+    let wrapper = mountBrowser();
+    expect(wrapper.findComponent({ name: 'VSelect' }).attributes('modelvalue')).toBe('added-asc');
+    wrapper.findComponent({ name: 'VSelect' }).vm.$emit('update:modelValue', 'alphabetic-desc');
+    await flushPromises();
+    expect(localStorage.getItem('collection_sort_by')).toBe('alphabetic-desc');
+    expect(mocks.service.updatePreferences).not.toHaveBeenCalled();
+    wrapper.unmount();
+    wrapper = mountBrowser();
+    expect(wrapper.findComponent({ name: 'VSelect' }).attributes('modelvalue')).toBe('alphabetic-desc');
+    wrapper.unmount();
+});
+
+it('uses viewer sorting and saves only sort changes without overwriting card size', async () => {
+    localStorage.setItem('collection_sort_by', 'alphabetic-desc');
+    mocks.service.user.value = { id: 'viewer', preferences: { cardSize: 'medium', sortBy: 'edited-desc' } };
+    const wrapper = mountBrowser();
+    const selector = wrapper.findComponent({ name: 'VSelect' });
+    expect(selector.attributes('modelvalue')).toBe('edited-desc');
+    expect(mocks.service.updatePreferences).not.toHaveBeenCalled();
+    selector.vm.$emit('update:modelValue', 'releaseDate-asc');
+    await flushPromises();
+    expect(mocks.service.updatePreferences).toHaveBeenCalledExactlyOnceWith({ sortBy: 'releaseDate-asc' });
+    expect(localStorage.getItem('collection_sort_by')).toBe('alphabetic-desc');
+    mocks.service.user.value = null;
+    await flushPromises();
+    expect(selector.attributes('modelvalue')).toBe('alphabetic-desc');
     wrapper.unmount();
 });
