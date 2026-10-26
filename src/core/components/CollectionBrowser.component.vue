@@ -14,8 +14,10 @@
             <v-divider />
             <v-list nav :aria-label="t('categories.navigation')">
                 <v-list-item prepend-icon="mdi-view-grid" :title="t('categories.all')"
-                    :active="selectedCategoryId === null" @click="selectCategory(null)" />
-                <CategoryNavigationList :nodes="categoryTree" :selected-id="selectedCategoryId"
+                    :active="selectedCategoryId === null" @click="selectCategory(null)">
+                    <template #append><span class="text-body-2 text-medium-emphasis">{{ collection.length }}</span></template>
+                </v-list-item>
+                <CategoryNavigationList :nodes="categoryTree" :selected-id="selectedCategoryId" :counts="categoryCounts"
                     @select="selectCategory" />
             </v-list>
         </v-navigation-drawer>
@@ -46,7 +48,7 @@
 
         <v-container class="py-6">
             <div class="collection-heading mb-4">
-                <h1 class="text-h4">{{ title }}</h1>
+                <h1 class="text-h4">{{ title }} <span class="text-medium-emphasis">({{ filters.filtered.value.length }})</span></h1>
                 <div v-if="collection.length" class="collection-toolbar">
                     <div class="collection-search-sort">
                         <v-text-field
@@ -166,6 +168,10 @@ const filtersOpen = ref(!mobile.value);
 const drawerOpen = ref(!mobile.value);
 const selectedCategoryId = ref<number | null>(null);
 const categoryTree = computed(() => buildCategoryTree(categories.value));
+const categoryCounts = computed(() => Object.fromEntries(categories.value.map((category) => {
+    const ids = descendantCategoryIds(category.id, categories.value);
+    return [category.id, collection.value.filter((item) => item.category_ids.some((id) => ids.has(id))).length];
+})));
 const categoryScopedCollection = computed(() => {
     if (selectedCategoryId.value === null) return collection.value;
     const ids = descendantCategoryIds(selectedCategoryId.value, categories.value);

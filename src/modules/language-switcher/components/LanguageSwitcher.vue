@@ -43,7 +43,7 @@ const { locale } = useI18n()
 const availableLocales = getAvailableLocales()
 const currentLocale = computed(() => locale.value as LocaleKey)
 const currentLanguageName = computed(() => availableLocales[currentLocale.value])
-const currentLanguageCode = computed(() => currentLocale.value)
+const currentLanguageCode = computed(() => currentLocale.value.toUpperCase())
 
 async function changeLanguage(langCode: LocaleKey) {
   try {
