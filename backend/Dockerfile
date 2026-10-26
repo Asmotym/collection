@@ -1,4 +1,4 @@
-FROM node:22-alpine AS deps
+FROM node:26-alpine AS deps
 WORKDIR /app
 COPY backend/package*.json ./backend/
 RUN npm install --prefix backend
@@ -10,7 +10,7 @@ COPY backend ./backend
 COPY shared ./shared
 RUN npm run build --prefix backend
 
-FROM node:22-alpine AS runner
+FROM node:26-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=deps /app/backend/node_modules ./backend/node_modules
