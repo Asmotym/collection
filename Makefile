@@ -37,10 +37,10 @@ install:
 build: frontend-build backend-build
 
 frontend-build:
-	$(COMPOSE_RUN) frontend npm run build
+	$(COMPOSE) build frontend
 
 backend-build:
-	$(COMPOSE_RUN) backend npm run build --prefix backend
+	$(COMPOSE) build backend
 
 up:
 	$(COMPOSE) up --build -d
