@@ -34,6 +34,31 @@ function mountBrowser() {
             VContainer: true, VTextField: true, VSelect: true, VBtnToggle: true, VRow: true, VCol: true, VAlert: true, VEmptyState: true },
     } });
 }
+it('saves both panel states independently and restores them after a refresh', async () => {
+    mocks.service.user.value = { id: 'viewer', preferences: { cardSize: 'large', leftPanelOpen: false, rightPanelOpen: true } };
+    mocks.service.updatePreferences.mockImplementation(async (patch: object) => {
+        mocks.service.user.value = { ...mocks.service.user.value,
+            preferences: { ...mocks.service.user.value.preferences, ...patch } };
+    });
+    let wrapper = mountBrowser();
+    const left = () => wrapper.findComponent({ name: 'VNavigationDrawer' });
+    const right = () => wrapper.findComponent({ name: 'CollectionFilters' });
+    expect(left().attributes('modelvalue')).toBe('false');
+    expect(right().props('modelValue')).toBe(true);
+    expect(mocks.service.updatePreferences).not.toHaveBeenCalled();
+    left().vm.$emit('update:modelValue', true);
+    right().vm.$emit('update:modelValue', false);
+    await flushPromises();
+    expect(mocks.service.updatePreferences).toHaveBeenCalledWith({ leftPanelOpen: true });
+    expect(mocks.service.updatePreferences).toHaveBeenCalledWith({ rightPanelOpen: false });
+    wrapper.unmount();
+    mocks.service.updatePreferences.mockClear();
+    wrapper = mountBrowser();
+    expect(left().attributes('modelvalue')).toBe('true');
+    expect(right().props('modelValue')).toBe(false);
+    expect(mocks.service.updatePreferences).not.toHaveBeenCalled();
+    wrapper.unmount();
+});
 it('offers category descendants, filters and details to anonymous visitors', async () => {
     const wrapper = mountBrowser();
     const cards = () => wrapper.findAllComponents({ name: 'CollectionCard' });

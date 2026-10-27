@@ -19,3 +19,14 @@ test('rejects invalid preference values', () => {
         assert.throws(() => normalizeUserPreferences(value));
     }
 });
+
+test('accepts independent boolean panel preferences and rejects invalid states', () => {
+    for (const key of ['leftPanelOpen', 'rightPanelOpen']) {
+        for (const value of [true, false]) {
+            assert.deepEqual(normalizeUserPreferences({ [key]: value }), { [key]: value });
+        }
+        for (const value of [null, 'false', 0]) {
+            assert.throws(() => normalizeUserPreferences({ [key]: value }));
+        }
+    }
+});

@@ -164,8 +164,26 @@ const selectedItem = ref<CollectionItem | null>(null);
 const detailDialogOpen = ref(false);
 const cardSize = ref<CardSizePreference>(DEFAULT_USER_PREFERENCES.cardSize);
 const { mobile } = useDisplay();
-const filtersOpen = ref(!mobile.value);
-const drawerOpen = ref(!mobile.value);
+function panelPreference(key: 'leftPanelOpen' | 'rightPanelOpen') {
+    const open = ref(!mobile.value);
+    watch(() => discordService.user.value?.id, () => {
+        open.value = discordService.user.value?.preferences[key] ?? !mobile.value;
+    }, { immediate: true });
+    return computed({
+        get: () => open.value,
+        set: (value: boolean) => {
+            if (open.value === value) return;
+            open.value = value;
+            if (discordService.user.value) {
+                void discordService.updatePreferences({ [key]: value }).catch(() => {
+                    /* Keep the panel state for this visit when persistence fails. */
+                });
+            }
+        },
+    });
+}
+const filtersOpen = panelPreference('rightPanelOpen');
+const drawerOpen = panelPreference('leftPanelOpen');
 const selectedCategoryId = ref<number | null>(null);
 const categoryTree = computed(() => buildCategoryTree(categories.value));
 const categoryCounts = computed(() => Object.fromEntries(categories.value.map((category) => {

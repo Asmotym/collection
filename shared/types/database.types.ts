@@ -16,6 +16,8 @@ export function isCollectionSort(value: unknown): value is CollectionSort {
 }
 
 export interface UserPreferences {
+    leftPanelOpen?: boolean;
+    rightPanelOpen?: boolean;
     cardSize: CardSizePreference;
     sortBy: CollectionSort;
 }

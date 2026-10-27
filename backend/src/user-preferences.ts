@@ -4,6 +4,12 @@ export function normalizeUserPreferences(value: unknown): Partial<UserPreference
     const raw = value && typeof value === 'object' && !Array.isArray(value)
         ? value as Record<string, unknown> : {};
     const preferences: Partial<UserPreferences> = {};
+    for (const key of ['leftPanelOpen', 'rightPanelOpen'] as const) {
+        if (key in raw) {
+            if (typeof raw[key] !== 'boolean') throw new Error(`${key} must be a boolean`);
+            preferences[key] = raw[key];
+        }
+    }
     if ('cardSize' in raw) {
         if (raw.cardSize !== 'large' && raw.cardSize !== 'medium' && raw.cardSize !== 'small') {
             throw new Error('Card size must be large, medium, or small');
