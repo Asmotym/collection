@@ -260,5 +260,16 @@
     "shareCollection": "Share my collection",
     "shareHint": "Anyone with the link can view your collection, categories, and item details.",
     "saveError": "Unable to save your changes. Please try again."
+  },
+  "details": {
+    "albumInformation": "Album information",
+    "name": "Name",
+    "year": "Year",
+    "tracklist": "Tracklist",
+    "loading": "Loading tracks…",
+    "tracksUnavailable": "The tracklist could not be loaded.",
+    "lyrics": "Lyrics",
+    "noLyrics": "No lyrics found for this track.",
+    "lyricsError": "Lyrics are temporarily unavailable. Click Lyrics to try again."
   }
 }

@@ -260,5 +260,16 @@
     "shareCollection": "Compartir mi colección",
     "shareHint": "Cualquier persona con el enlace puede ver tu colección, categorías y detalles de los artículos.",
     "saveError": "No se pudieron guardar los cambios. Inténtalo de nuevo."
+  },
+  "details": {
+    "albumInformation": "Información del álbum",
+    "name": "Nombre",
+    "year": "Año",
+    "tracklist": "Lista de canciones",
+    "loading": "Cargando canciones…",
+    "tracksUnavailable": "No se pudo cargar la lista de canciones.",
+    "lyrics": "Letra",
+    "noLyrics": "No se encontró la letra de esta canción.",
+    "lyricsError": "Las letras no están disponibles temporalmente. Pulsa Letra para reintentar."
   }
 }

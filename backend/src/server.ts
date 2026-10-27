@@ -667,6 +667,22 @@ class RequestError extends Error {
     }
 }
 
+app.get('/api/musicbrainz/:entity/:mbid/details', async (request, reply) => {
+    const { entity, mbid } = request.params as { entity: string; mbid: string };
+    if (!['artist', 'release'].includes(entity) || !isMusicBrainzId(mbid)) {
+        reply.code(400);
+        return { error: 'Invalid MusicBrainz reference' };
+    }
+    try {
+        const data = entity === 'artist'
+            ? await musicBrainzClient.lookupArtistDetails(mbid)
+            : await musicBrainzClient.lookupRelease(mbid);
+        return { success: true, data };
+    } catch (error) {
+        return replyWithUpstreamError(reply, error);
+    }
+});
+
 app.get('/api/musicbrainz/artists', async (request, reply) => {
     const queryParams = request.query as { query?: string };
     let query: string;

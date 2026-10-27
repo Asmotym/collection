@@ -1,8 +1,8 @@
 <template>
-    <section v-if="artist || album || commonRelease || musicBrainzRelease" class="musicbrainz-details mb-6">
-        <h2 class="text-h6 mb-3">{{ t('musicbrainzDetails.title') }}</h2>
+    <section v-if="artist || album || commonRelease || musicBrainzRelease" :class="['musicbrainz-details mb-6', { 'single-panel': panel }]">
+        <h2 v-if="!panel" class="text-h6 mb-3">{{ t('musicbrainzDetails.title') }}</h2>
         <v-row>
-            <v-col v-if="album || release" cols="12" md="6">
+            <v-col v-if="panel !== 'artist' && (album || release)" cols="12" :md="panel ? 12 : 6">
                 <v-sheet color="surface-light" rounded="lg" class="pa-4 h-100">
                     <div class="d-flex align-center ga-2 mb-3">
                         <v-icon>mdi-album</v-icon>
@@ -39,7 +39,7 @@
                     </v-btn>
                 </v-sheet>
             </v-col>
-            <v-col v-if="artist" cols="12" md="6">
+            <v-col v-if="panel !== 'album' && artist" cols="12" :md="panel ? 12 : 6">
                 <v-sheet color="surface-light" rounded="lg" class="pa-4 h-100">
                     <div class="d-flex align-center ga-2 mb-3">
                         <v-icon>mdi-account-music</v-icon>
@@ -64,7 +64,7 @@
                 </v-sheet>
             </v-col>
         </v-row>
-        <v-divider class="mt-6" />
+        <v-divider v-if="!panel" class="mt-6" />
     </section>
 </template>
 
@@ -80,6 +80,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{
+    panel?: 'album' | 'artist';
     artist: MusicBrainzArtist | null;
     album: MusicBrainzReleaseGroup | null;
     release: CollectionReleaseSelection | null;
@@ -115,7 +116,7 @@ const albumDetails = computed<Detail[]>(() => {
         .map((medium) => medium.format).filter((value): value is string => Boolean(value)))];
     const labelInfo = musicBrainzRelease.value?.['label-info']?.[0];
     return compactDetails([
-        { label: t('musicbrainzDetails.canonicalName'), value: props.album?.title },
+        { label: t('musicbrainzDetails.canonicalName'), value: props.panel ? undefined : props.album?.title },
         {
             label: t('musicbrainzDetails.releaseDate'),
             value: musicBrainzRelease.value?.date ?? props.album?.['first-release-date'],
@@ -140,7 +141,7 @@ const artistDetails = computed<Detail[]>(() => {
         ? `${lifeSpan.begin} – ${lifeSpan.end ?? t('musicbrainzDetails.present')}`
         : lifeSpan?.end;
     return compactDetails([
-        { label: t('musicbrainzDetails.canonicalName'), value: props.artist.name },
+        { label: t('musicbrainzDetails.canonicalName'), value: props.panel ? undefined : props.artist.name },
         { label: t('musicbrainzDetails.type'), value: props.artist.type },
         { label: t('musicbrainzDetails.origin'), value: props.artist.area?.name ?? props.artist.country },
         { label: t('musicbrainzDetails.activePeriod'), value: activePeriod },
@@ -154,6 +155,10 @@ function compactDetails(details: Array<{ label: string; value?: string | null }>
 </script>
 
 <style scoped>
+.single-panel :deep(.v-sheet) { background: transparent !important; padding: 0 !important; }
+.musicbrainz-fields dd { overflow-wrap: anywhere; }
+.single-panel .musicbrainz-fields { grid-template-columns: 1fr; gap: 2px; }
+.single-panel .musicbrainz-fields dd { margin-bottom: 10px; }
 .musicbrainz-fields {
     display: grid;
     grid-template-columns: minmax(110px, auto) 1fr;

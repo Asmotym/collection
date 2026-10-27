@@ -126,6 +126,18 @@ export class MusicBrainzClient {
         }
     }
 
+    async lookupRelease(mbid: string): Promise<MusicBrainzRelease> {
+        return this.requestMusicBrainz<MusicBrainzRelease>(
+            `${MUSICBRAINZ_BASE_URL}/release/${mbid}?fmt=json&inc=recordings+labels+media`,
+        );
+    }
+
+    async lookupArtistDetails(mbid: string): Promise<MusicBrainzArtist> {
+        return this.requestMusicBrainz<MusicBrainzArtist>(
+            `${MUSICBRAINZ_BASE_URL}/artist/${mbid}?fmt=json&inc=url-rels`,
+        );
+    }
+
     async lookupReleaseGroup(mbid: string): Promise<MusicBrainzReleaseGroup | null> {
         try {
             const releaseGroup = await this.requestMusicBrainz<unknown>(`${MUSICBRAINZ_BASE_URL}/release-group/${mbid}?fmt=json`);

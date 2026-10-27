@@ -260,5 +260,16 @@
     "shareCollection": "Partager ma collection",
     "shareHint": "Toute personne disposant du lien peut consulter votre collection, vos catégories et les détails des éléments.",
     "saveError": "Impossible d’enregistrer vos modifications. Veuillez réessayer."
+  },
+  "details": {
+    "albumInformation": "Informations sur l’album",
+    "name": "Nom",
+    "year": "Année",
+    "tracklist": "Liste des titres",
+    "loading": "Chargement des titres…",
+    "tracksUnavailable": "Impossible de charger les titres.",
+    "lyrics": "Paroles",
+    "noLyrics": "Aucune parole trouvée pour ce titre.",
+    "lyricsError": "Les paroles sont temporairement indisponibles. Cliquez sur Paroles pour réessayer."
   }
 }

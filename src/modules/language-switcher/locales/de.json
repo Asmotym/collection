@@ -260,5 +260,16 @@
     "shareCollection": "Meine Sammlung teilen",
     "shareHint": "Alle mit dem Link können deine Sammlung, Kategorien und Artikeldetails ansehen.",
     "saveError": "Deine Änderungen konnten nicht gespeichert werden. Bitte erneut versuchen."
+  },
+  "details": {
+    "albumInformation": "Albuminformationen",
+    "name": "Name",
+    "year": "Jahr",
+    "tracklist": "Titelliste",
+    "loading": "Titel werden geladen…",
+    "tracksUnavailable": "Die Titelliste konnte nicht geladen werden.",
+    "lyrics": "Liedtext",
+    "noLyrics": "Kein Liedtext für diesen Titel gefunden.",
+    "lyricsError": "Liedtexte sind vorübergehend nicht verfügbar. Klicke zum Wiederholen auf Liedtext."
   }
 }

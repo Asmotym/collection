@@ -73,6 +73,7 @@ export interface MusicBrainzReleaseMedia {
     format?: string | null;
     title?: string | null;
     'track-count'?: number;
+    tracks?: Array<{ id: string; number: string; title?: string; length?: number | null; recording?: { title: string; length?: number | null } }>;
 }
 
 export interface MusicBrainzReleaseLabelInfo {
