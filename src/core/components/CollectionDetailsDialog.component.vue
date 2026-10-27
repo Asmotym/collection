@@ -18,7 +18,7 @@
                             </div>
                         </header>
                     </Transition>
-                    <div class="album-content panel-scroll" :class="{ 'is-scrolling': scrolling.album }" tabindex="0" :aria-label="t('details.albumInformation')" @scroll.passive="onAlbumScroll" @touchstart.passive="showScrollbar('album')" @touchend.passive="showScrollbar('album')">
+                    <div class="album-content panel-scroll" tabindex="0" :aria-label="t('details.albumInformation')" @scroll.passive="onAlbumScroll">
                         <header ref="albumHeader" class="album-header">
                             <div class="cover-stage" :style="coverTilt" @pointermove="tiltCover" @pointerleave="resetCoverTilt" @pointercancel="resetCoverTilt">
                                 <div class="cover">
@@ -51,7 +51,7 @@
                         </section>
                     </div>
                 </main>
-                <aside class="artist-panel panel-scroll" :class="{ 'is-scrolling': scrolling.artist }" tabindex="0" :aria-label="t('musicbrainzDetails.artist')" @scroll.passive="showScrollbar('artist')" @touchstart.passive="showScrollbar('artist')" @touchend.passive="showScrollbar('artist')">
+                <aside class="artist-panel panel-scroll" tabindex="0" :aria-label="t('musicbrainzDetails.artist')">
                     <p class="eyebrow">{{ t('musicbrainzDetails.artist') }}</p>
                     <img v-if="artistImage && !artistImageFailed" :src="artistImage" :alt="item.artist_name" class="artist-image" @error="artistImageFailed = true">
                     <h2 class="artist-name">{{ item.artist_name }}</h2>
@@ -108,20 +108,12 @@ function resetCoverTilt() {
 const albumHeader = ref<HTMLElement | null>(null);
 const compactAlbumHeader = ref(false);
 function onAlbumScroll(event: Event) {
-    showScrollbar('album');
     const scroller = event.currentTarget as HTMLElement;
     const header = albumHeader.value;
     if (!header) return;
     // Keep the full-size header in the flow so switching sizes never shifts scroll position.
     const headerBottom = header.getBoundingClientRect().bottom - scroller.getBoundingClientRect().top;
     compactAlbumHeader.value = scroller.scrollTop > 0 && headerBottom <= 84;
-}
-const scrolling = ref({ album: false, artist: false });
-const scrollTimers: Partial<Record<'album' | 'artist', ReturnType<typeof setTimeout>>> = {};
-function showScrollbar(panel: 'album' | 'artist') {
-    scrolling.value[panel] = true;
-    clearTimeout(scrollTimers[panel]);
-    scrollTimers[panel] = setTimeout(() => { scrolling.value[panel] = false; }, 1000);
 }
 let controller = new AbortController();
 watch(() => [props.modelValue, props.item] as const, async ([open, item]) => {
@@ -139,7 +131,6 @@ watch(() => [props.modelValue, props.item] as const, async ([open, item]) => {
 }, { immediate: true });
 onBeforeUnmount(() => {
     controller.abort();
-    Object.values(scrollTimers).forEach(clearTimeout);
 });
 function duration(milliseconds?: number | null) { if (!milliseconds) return ''; const seconds = Math.round(milliseconds / 1000); return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`; }
 async function toggleLyrics(track: Track) {
@@ -172,12 +163,7 @@ async function toggleLyrics(track: Track) {
 .compact-header-enter-from, .compact-header-leave-to { opacity: 0; transform: translateY(-8px); }
 @media (max-width: 760px) { .compact-album-header { padding-inline: 20px 64px; } }
 @media (prefers-reduced-motion: reduce) { .compact-header-enter-active, .compact-header-leave-active { transition: none; } }
-.panel-scroll { overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: transparent transparent; }
-.panel-scroll.is-scrolling { scrollbar-color: rgba(160, 160, 160, .65) transparent; }
-.panel-scroll::-webkit-scrollbar { width: 6px; }
-.panel-scroll::-webkit-scrollbar-track { background: transparent; }
-.panel-scroll::-webkit-scrollbar-thumb { background: transparent; border-radius: 6px; }
-.panel-scroll.is-scrolling::-webkit-scrollbar-thumb { background: rgba(160, 160, 160, .65); }
+.panel-scroll { overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }
 .panel-scroll:focus-visible { outline: 2px solid currentColor; outline-offset: -3px; }
 .album-header { display: grid; grid-template-columns: minmax(0, 42%) minmax(0, 1fr); gap: 26px; align-items: center; margin-bottom: 36px; }
 .cover-stage { perspective: 900px; min-width: 0; }

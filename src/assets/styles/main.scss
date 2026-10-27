@@ -14,3 +14,109 @@
     opacity: var(--v-medium-emphasis-opacity);
     font-style: italic;
 }
+
+// Shared color treatment keeps every route within the same dark palette.
+.app-shell {
+    background:
+        radial-gradient(ellipse at 10% 0%, rgba(var(--v-theme-primary), .10), transparent 48%),
+        radial-gradient(ellipse at 100% 70%, rgba(var(--v-theme-secondary), .06), transparent 45%),
+        rgb(var(--v-theme-background));
+}
+
+.app-shell .app-header {
+    background: linear-gradient(110deg, #252039, #182932);
+    border-bottom: 1px solid rgba(var(--v-theme-primary), .24);
+}
+
+.app-header-title { color: rgb(var(--v-theme-primary)); font-weight: 750; }
+.header-navigation .v-btn--active { color: rgb(var(--v-theme-primary)); }
+
+.app-shell .app-footer {
+    background: linear-gradient(110deg, #1E1B2E, #17252B);
+    border-top-color: rgba(var(--v-theme-secondary), .22);
+}
+
+.app-shell .category-drawer {
+    background: linear-gradient(180deg, #222039, #191D2D 75%);
+}
+
+.app-shell .filters-panel {
+    background: linear-gradient(180deg, #183034, #191D2D 75%);
+}
+
+.category-drawer h2 { color: rgb(var(--v-theme-primary)); }
+.filters-panel h2 { color: rgb(var(--v-theme-secondary)); }
+.app-shell .category-drawer-toggle { color: rgb(var(--v-theme-primary)); }
+.app-shell .filters-panel-toggle { color: rgb(var(--v-theme-secondary)); }
+
+.collection-heading h1,
+.dashboard-shell > h1 { color: #DDD2FF; }
+.about-page > h1 { color: rgb(var(--v-theme-accent)); }
+.settings-page > h1 { color: rgb(var(--v-theme-secondary)); }
+
+.app-shell .collection-card {
+    --card-accent: var(--v-theme-primary);
+    border: 1px solid rgba(var(--card-accent), .22);
+    border-top: 3px solid rgba(var(--card-accent), .75);
+    background: linear-gradient(155deg, rgba(var(--card-accent), .08), transparent 65%), rgb(var(--v-theme-surface));
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+.collection-grid-item:nth-child(3n + 2) .collection-card { --card-accent: var(--v-theme-secondary); }
+.collection-grid-item:nth-child(3n) .collection-card { --card-accent: var(--v-theme-accent); }
+.app-shell .collection-card:hover,
+.app-shell .collection-card:focus-visible {
+    border-color: rgb(var(--card-accent));
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .24);
+}
+.collection-card .v-card-actions { color: rgb(var(--card-accent)); }
+
+.dashboard-shell > .v-tabs {
+    background: rgba(var(--v-theme-primary), .07);
+    border-bottom: 1px solid rgba(var(--v-theme-primary), .22);
+    border-radius: 10px 10px 0 0;
+}
+.collection-table thead th { color: rgb(var(--v-theme-secondary)); }
+.about-page section {
+    padding: 24px;
+    border: 1px solid rgba(var(--v-theme-accent), .22);
+    border-radius: 12px;
+    background: rgba(var(--v-theme-accent), .05);
+}
+.about-page .v-list-item:nth-child(3n + 1) .v-list-item-title { color: rgb(var(--v-theme-primary)); }
+.about-page .v-list-item:nth-child(3n + 2) .v-list-item-title { color: rgb(var(--v-theme-secondary)); }
+.about-page .v-list-item:nth-child(3n) .v-list-item-title { color: rgb(var(--v-theme-accent)); }
+
+.feature-item {
+    height: 100%;
+    padding: 24px;
+    border: 1px solid rgba(var(--v-theme-primary), .20);
+    border-radius: 14px;
+    background: rgba(var(--v-theme-primary), .06);
+}
+.feature-section .v-row > :nth-child(2) .feature-item {
+    border-color: rgba(var(--v-theme-secondary), .24);
+    background: rgba(var(--v-theme-secondary), .06);
+}
+.feature-section .v-row > :nth-child(2) .v-icon.text-primary { color: rgb(var(--v-theme-secondary)) !important; }
+.feature-section .v-row > :nth-child(3) .feature-item {
+    border-color: rgba(var(--v-theme-accent), .24);
+    background: rgba(var(--v-theme-accent), .06);
+}
+.feature-section .v-row > :nth-child(3) .v-icon.text-primary { color: rgb(var(--v-theme-accent)) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+    .app-shell .collection-card { transition: none; }
+}
+
+// Transparent at rest; the shared activity listener reveals each active scroller.
+// Apply directly to every element because scrollbar-color otherwise inherits.
+* {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+}
+*.is-scrolling { scrollbar-color: rgba(160, 160, 160, .65) transparent; }
+*::-webkit-scrollbar { width: 6px; height: 6px; }
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner { background: transparent; }
+*::-webkit-scrollbar-thumb { background: transparent; border-radius: 6px; }
+*.is-scrolling::-webkit-scrollbar-thumb { background: rgba(160, 160, 160, .65); }

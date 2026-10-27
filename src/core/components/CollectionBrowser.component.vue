@@ -25,7 +25,7 @@
             v-if="categories.length"
             class="category-drawer-toggle"
             :class="{ 'category-drawer-toggle--open': drawerOpen }"
-            :icon="drawerOpen ? 'mdi-chevron-left' : 'mdi-chevron-right'"
+            :icon="drawerOpen ? 'mdi-chevron-left' : 'mdi-shape-outline'"
             color="surface"
             variant="elevated"
             :aria-label="t(drawerOpen ? 'categories.hideNavigation' : 'categories.openNavigation')"
@@ -230,19 +230,17 @@ watch(cardSize, async (size) => {
 .category-drawer { overflow-y: auto; max-width: calc(100vw - 48px); }
 .category-drawer-toggle {
     position: fixed;
-    top: 50%;
+    top: calc(var(--v-layout-top, 64px) + 16px);
     left: 0;
     z-index: 1016;
     width: 32px;
     height: 56px;
     border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
     border-radius: 0 8px 8px 0;
-    transform: translateY(-50%);
     transition: left .2s cubic-bezier(.4, 0, .2, 1);
 }
 .category-drawer-toggle--open {
-    left: calc(min(256px, calc(100vw - 48px)) - 16px);
-    border-radius: 8px;
+    left: min(256px, calc(100vw - 48px));
 }
 .collection-heading {
     display: flex;

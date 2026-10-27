@@ -1,7 +1,12 @@
 <template>
     <v-app-bar class="app-header">
         <template v-slot:prepend>
-            <v-app-bar-title class="app-header-title ml-2">{{ t('common.title') }}</v-app-bar-title>
+            <v-app-bar-title class="app-header-title ml-2">
+                <span class="header-brand">
+                    <img src="/favicon.svg" class="header-logo" alt="" width="32" height="32" />
+                    <span>{{ t('common.title') }}</span>
+                </span>
+            </v-app-bar-title>
         </template>
 
         <v-container class="header-navigation d-flex justify-center align-center">
@@ -35,6 +40,18 @@ const user = DiscordService.getInstance().user;
 </script>
 
 <style scoped>
+.header-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    vertical-align: middle;
+}
+
+.header-logo {
+    display: block;
+    flex-shrink: 0;
+}
+
 .header-title {
     font-size: 1.8rem;
     font-weight: bold;

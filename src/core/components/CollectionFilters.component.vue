@@ -23,7 +23,7 @@
     <v-btn
         class="filters-panel-toggle"
         :class="{ 'filters-panel-toggle--open': open }"
-        :icon="open ? 'mdi-chevron-right' : 'mdi-chevron-left'"
+        :icon="open ? 'mdi-chevron-right' : 'mdi-filter-outline'"
         color="surface"
         variant="elevated"
         :aria-label="t(open ? 'home.filters.hide' : 'home.filters.open')"
@@ -62,18 +62,16 @@ const { t } = useI18n();
 .filters-panel { max-width: calc(100vw - 48px); }
 .filters-panel-toggle {
     position: fixed;
-    top: 50%;
+    top: calc(var(--v-layout-top, 64px) + 16px);
     right: 0;
     z-index: 1006;
     width: 32px;
     height: 56px;
     border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
     border-radius: 8px 0 0 8px;
-    transform: translateY(-50%);
     transition: right .2s cubic-bezier(.4, 0, .2, 1);
 }
 .filters-panel-toggle--open {
-    right: calc(min(320px, calc(100vw - 48px)) - 16px);
-    border-radius: 8px;
+    right: min(320px, calc(100vw - 48px));
 }
 </style>

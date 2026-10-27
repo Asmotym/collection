@@ -11,6 +11,9 @@
 
 <script setup lang="ts">
 import { watchEffect } from 'vue';
+import { useAutoHideScrollbars } from 'core/composables/useAutoHideScrollbars';
+
+useAutoHideScrollbars();
 import { useI18n } from 'vue-i18n';
 import AppFooter from 'core/components/AppFooter.component.vue';
 
