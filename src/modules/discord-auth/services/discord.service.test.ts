@@ -28,9 +28,37 @@ it('does not restore authentication from a request that completes after logout',
     let finish!: (value: unknown) => void;
     vi.stubGlobal('fetch', vi.fn(() => new Promise(resolve => { finish = resolve; })));
     const service = new DiscordService();
-    const pending = service.handleLogin(); service.logout();
+    const pending = service.handleLogin();
+    await vi.waitFor(() => expect(finish).toBeTypeOf('function'));
+    service.logout();
     finish({ json: async () => ({ success: true, data: { id: 'owner', username: 'Owner' } }) });
     await pending;
     expect(service.user.value).toBeNull();
     expect(localStorage.getItem('discord_user')).toBeNull();
+});
+
+it('rejects callbacks without matching state before exchanging tokens', async () => {
+    window.history.replaceState({}, '', '/?code=code&state=wrong');
+    localStorage.setItem('discord_oauth_state', 'expected');
+    sessionStorage.setItem('discord_code_verifier', 'v'.repeat(64));
+    const fetch = vi.fn(); vi.stubGlobal('fetch', fetch);
+    await expect(new DiscordService().handleAuthCallback()).rejects.toThrow('Invalid or denied');
+    expect(fetch).not.toHaveBeenCalled();
+    expect(window.location.search).toBe('');
+    expect(sessionStorage.getItem('discord_code_verifier')).toBeNull();
+});
+it('exchanges a valid callback and stores refreshable credentials', async () => {
+    window.history.replaceState({}, '', '/?code=code&state=expected&keep=yes');
+    localStorage.setItem('discord_oauth_state', 'expected');
+    sessionStorage.setItem('discord_code_verifier', 'v'.repeat(64));
+    const auth = { accessToken: 'new', refreshToken: 'refresh', expiresAt: Date.now() + 3600000 };
+    const fetch = vi.fn().mockResolvedValueOnce({ ok: true, json: async () => ({ success: true, data: auth }) })
+        .mockResolvedValueOnce({ json: async () => ({ success: true, data: { id: 'owner', username: 'Owner' } }) });
+    vi.stubGlobal('fetch', fetch);
+    const service = new DiscordService();
+    await service.handleAuthCallback();
+    expect(service.getAuth()).toEqual(auth);
+    expect(service.user.value?.id).toBe('owner');
+    expect(window.location.search).toBe('?keep=yes');
+    window.history.replaceState({}, '', '/');
 });

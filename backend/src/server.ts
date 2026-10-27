@@ -1,3 +1,4 @@
+import { registerDiscordOAuth } from './discord-oauth.js';
 import { normalizeUserPreferences } from './user-preferences.js';
 import cors from '@fastify/cors';
 import { registerUserAccess, serializeUser } from './user-access.js';
@@ -2071,6 +2072,8 @@ app.patch('/api/users/:id/preferences', async (request, reply) => {
         queryType: 'user',
     };
 });
+
+registerDiscordOAuth(app);
 
 app.post('/api/discord', async (request, reply) => {
     const body = request.body as DiscordAuth & { queryType?: string };

@@ -1,3 +1,4 @@
+import { ensureDiscordAuth, exchangeDiscordToken, InvalidDiscordSession } from './discord-session';
 import type { DiscordAuth, DiscordUser } from "../../../../shared/types/discord.types";
 import { DEFAULT_USER_PREFERENCES, type UserPreferences } from "../../../../shared/types/database.types";
 import { getApiUrl, getRedirectUri } from "modules/discord-auth/utils/urls.utils";
@@ -17,40 +18,69 @@ export class DiscordService {
         return DiscordService.instance;
     }
 
+    constructor() {
+        window.addEventListener('discord-session-expired', () => {
+            this.initialization = null;
+            this.removeUser();
+        });
+    }
+
+    private sessionVersion = 0;
+
     private initialization: Promise<DiscordUser | null> | null = null;
 
     public handleLogin(): Promise<DiscordUser | null> {
-        return this.initialization ??= this.initialize();
+        if (!this.initialization) {
+            this.initialization = this.initialize().catch(error => {
+                this.initialization = null;
+                throw error;
+            });
+        }
+        return this.initialization;
     }
 
     private async initialize(): Promise<DiscordUser | null> {
         // Handle OAuth callback
-        if (window.location.hash.includes('token_type=')) {
+        if (new URLSearchParams(window.location.search).has('code') || new URLSearchParams(window.location.search).has('error')) {
             await this.handleAuthCallback();
             return this.user.value;
         }
 
         const auth = this.getAuth();
         if (auth && auth.accessToken) {
+            let current: DiscordAuth | null;
             try {
-                await this.fetchUserInfo(auth);
+                current = await ensureDiscordAuth();
             } catch (error) {
+                this.initialization = null;
+                if (!(error instanceof InvalidDiscordSession)) throw error;
                 this.removeAuth();
                 this.removeUser();
+                return null;
+            }
+            if (current) {
+                try { await this.fetchUserInfo(current); }
+                catch { this.removeAuth(); this.removeUser(); }
             }
         }
 
         return this.user.value;
     }
 
-    public login() {
+    public async login() {
         const state = this.generateRandomString(32)
         this.storeOauthState(state)
 
+        const verifier = this.generateRandomString(64);
+        sessionStorage.setItem('discord_code_verifier', verifier);
+        const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+        const challenge = btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
         const params = new URLSearchParams({
             client_id: DiscordService.DISCORD_CLIENT_ID,
             redirect_uri: getRedirectUri(),
-            response_type: 'token',
+            response_type: 'code',
+            code_challenge: challenge,
+            code_challenge_method: 'S256',
             scope: 'identify email',
             state: state
         })
@@ -59,42 +89,31 @@ export class DiscordService {
     }
 
     public logout() {
+        this.sessionVersion++;
         this.initialization = null;
         this.removeAuth();
         this.removeUser();
         this.removeOauthState();
+        sessionStorage.removeItem('discord_code_verifier');
     }
 
     public async handleAuthCallback() {
-        const urlParams = new URLSearchParams(window.location.hash.slice(1));
-
-        // retrieve url params from the discord redirect login
-        const tokenType = urlParams.get('token_type') || '';
-        const accessToken = urlParams.get('access_token') || '';
-        const expiresIn = Number(urlParams.get('expires_in') || 0);
-        const scope = urlParams.get('scope') || '';
-        const state = urlParams.get('state') || '';
-        const auth = {
-            tokenType,
-            accessToken,
-            expiresIn,
-            scope,
-            state,
-        }
-
-        // retrieve saved state
+        const version = this.sessionVersion;
+        const params = new URLSearchParams(window.location.search);
         const savedState = this.getOauthState();
-
-        if (auth.state === savedState) {
-            // save auth to local storage
-            this.storeAuth(auth);
-
-            // clean up url
-            window.history.replaceState({}, document.title, window.location.pathname);
-
-            // retrieve user info
-            await this.fetchUserInfo(auth);
+        const verifier = sessionStorage.getItem('discord_code_verifier');
+        this.removeOauthState();
+        sessionStorage.removeItem('discord_code_verifier');
+        const cleanUrl = new URL(window.location.href);
+        for (const key of ['code', 'state', 'error', 'error_description', 'iss']) cleanUrl.searchParams.delete(key);
+        window.history.replaceState({}, document.title, cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+        if (!savedState || params.get('state') !== savedState || !verifier || !params.get('code') || params.has('error')) {
+            throw new Error('[DiscordAuth] Invalid or denied OAuth callback');
         }
+        const auth = await exchangeDiscordToken({ grantType: 'authorization_code', code: params.get('code')!, codeVerifier: verifier });
+        if (version !== this.sessionVersion) return;
+        this.storeAuth(auth);
+        await this.fetchUserInfo(auth);
     }
 
     public async updatePreferences(preferences: Partial<UserPreferences>): Promise<DiscordUser> {
@@ -114,7 +133,7 @@ export class DiscordService {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ ...auth, queryType: 'user' }),
+            body: JSON.stringify({ tokenType: auth.tokenType, accessToken: auth.accessToken, queryType: 'user' }),
         });
         const data = await userInfo.json();
         if (!data || !data.success) {
@@ -126,12 +145,8 @@ export class DiscordService {
     }
 
     private generateRandomString(length: number): string {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let result = '';
-        for (let i = 0; i < length; i++) {
-            result += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return result;
+        const bytes = crypto.getRandomValues(new Uint8Array(length));
+        return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('').slice(0, length);
     }
 
     public storeUser(user: DiscordUser) {

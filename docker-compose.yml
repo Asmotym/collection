@@ -20,6 +20,9 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     environment:
+      DISCORD_CLIENT_ID: ${VITE_DISCORD_CLIENT_ID:-}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
+      DISCORD_REDIRECT_URI: ${VITE_DISCORD_REDIRECT_URI:-}
       PORT: 3000
       DATABASE_URL: ${DATABASE_URL}
       FRONTEND_URL: ${FRONTEND_URL}

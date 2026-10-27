@@ -36,7 +36,9 @@ VITE_DISCORD_CLIENT_ID=
 VITE_DISCORD_REDIRECT_URI=
 ```
 
-Set `VITE_DISCORD_CLIENT_ID` and `VITE_DISCORD_REDIRECT_URI` when testing Discord login. For the Docker frontend, the default app URL is `http://localhost:8080`.
+Set `VITE_DISCORD_CLIENT_ID`, `VITE_DISCORD_REDIRECT_URI`, and `DISCORD_CLIENT_SECRET` for Discord login. Register the exact redirect URI in the Discord developer portal (for example `http://localhost:8080` for Docker or `http://localhost:5173` for Vite). Docker passes the client ID and redirect URI to the backend automatically. When running outside Docker, also set backend `DISCORD_CLIENT_ID` and `DISCORD_REDIRECT_URI` to those same values. Keep `DISCORD_CLIENT_SECRET` server-side; never prefix it with `VITE_`.
+
+Discord login uses authorization code OAuth with PKCE. Access tokens refresh before authenticated requests when they expire within one minute; a 401 triggers one refresh and retry. Rotated access and refresh tokens replace the stored credentials. Existing implicit-flow sessions require signing in again to obtain a refresh token. Revoked refresh tokens require signing in again; temporary exchange failures preserve credentials for retry.
 
 `MUSICBRAINZ_USER_AGENT` defaults to this repository's contact URL. Override it with an application name, version, and real contact URL or email for your deployment; MusicBrainz requires this identification for API requests.
 
